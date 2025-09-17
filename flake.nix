@@ -51,6 +51,7 @@
             pgadmin = artixRec;
             admin = artixRec;
             mumble = artixRec;
+            observe = artixRec;
             flagship = peerARecord peers.flagship;
           };
         };
