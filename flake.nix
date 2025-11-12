@@ -181,6 +181,11 @@
           ipv4 = [ "172.16.2.25/32" ];
         };
 
+        wasp = {
+          publicKey = "Y6di4cRd1Tq5Ii6C0ADrJPfMb0omVZ8hIJcuXQHEzBE=";
+          ipv4 = [ "172.16.2.26/32" ];
+        };
+
         ov13 = {
           publicKey = "S6yiCMatKlVX0WxyaWXTizasZPfQQ9oGM2pv82CtrgM=";
           ipv4 = [ "172.16.2.27/32" ];
