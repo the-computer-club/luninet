@@ -136,7 +136,7 @@
 
         "vxgw1.unallocatedspace.dev" = {
           publicKey = "YH/HBw/jOrG3EnXBu4asoCKGu7nnp1GvsjsFE/96q1E=";
-          ipv4 = [ "172.16.2.15/32" "172.16.2.18/32" "172.16.2.19/32" ];
+          ipv4 = [ "172.16.2.15/32" "172.16.2.18/32" "172.16.2.19/32" "172.16.3.0/24" ];
           persistentKeepalive = 10;
         };
 
