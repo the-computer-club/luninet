@@ -182,7 +182,7 @@
         };
 
         wasp = {
-          publicKey = "Y6di4cRd1Tq5Ii6C0ADrJPfMb0omVZ8hIJcuXQHEzBE=";
+          publicKey = "MuqTa+zz/m4wBH85quAsDtHZKMs+zSLbhll7aTgnYxY=";
           ipv4 = [ "172.16.2.26/32" ];
         };
 
