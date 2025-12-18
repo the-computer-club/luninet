@@ -6,7 +6,7 @@
 
     toPeers = n: v: {
       publicKey = v.publicKey;
-      allowedIPs = v.ipv4 ++ v.ipv6;
+      allowedIPs = (v.ipv4 or []) ++ (v.ipv6 or []);
       endpoint = v.selfEndpoint or null;
       persistentKeepalive = v.persistentKeepalive or null;
     };
@@ -15,11 +15,13 @@
     luninet-full =
       nixpkgs.lib.recursiveUpdate
         luninet
-        (builtins.readJSON (builtins.readFile ./inventory.json));
+        (builtins.fromJSON (builtins.readFile ./inventory.json));
 
     wireguard.networks.luni.peers.by-name = luninet-full;
   in
   {
+    inherit wireguard;
+
     lib = { inherit toPeers toNonFlakeParts; };
     flakeModules.asluni = { inherit wireguard; };
     nixosModules.asluni = { inherit wireguard; };

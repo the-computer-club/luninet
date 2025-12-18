@@ -2,7 +2,13 @@
   "jita.etherealryft.net" = {
     controller = true;
     publicKey = "Ngp854R/d126OVrO7nRv0yj8rdHRjGURa5LbD/UT8Xk=";
-    selfEndpoint = "72.55.233.131:56854";
+    endpoint = "72.55.233.131:56854";
+  };
+
+  cardinal = {
+    controller = true;
+    publicKey = "GfzR2IYKx6IBXwGVNSTVnCRcQSr/Wm5dlPwXHO2xykI=";
+    endpoint = "72.72.233.131:12345";
   };
 
   hydrogen.publicKey = "qXsTs+IsmHeq9+rulmG6M7XhVgu/3N/wEgEaHPuHciU=";
