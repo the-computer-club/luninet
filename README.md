@@ -97,11 +97,12 @@ If you're using NixOS flakes, then the minimal configuration is.
             # asluni can be anything.
             peers = inputs.automous-zones.flakeModules.asluni.wireguard.networks.asluni.peers.by-name;
             aslib = inputs.automous-zones.lib;
+            self' = peers.${config.networking.hostName}
           in {
             privateKeyFile = "/var/lib/wireguard/key";
             generatePrivateKeyFile = true;
             peers = aslib.toNonFlakeParts peers; # this is where the magic happens
-            ips = [ "<your-ip-address>/32" ];
+            ips = self'.ipv4 ++ self'.ipv6;
           };
         }
         ./configuration.nix
