@@ -4,7 +4,7 @@
   let
     toNonFlakeParts = data: (nixpkgs.lib.mapAttrsToList toPeers data);
 
-    toPeers = n: v: {
+    toPeers = v: {
       publicKey = v.publicKey;
       allowedIPs = (v.ipv4 or []) ++ (v.ipv6 or []);
       endpoint = v.selfEndpoint or null;
