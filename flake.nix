@@ -22,7 +22,10 @@
   {
     inherit wireguard;
 
-    lib = { inherit toPeers toNonFlakeParts; };
+    lib = {
+      toPeer = toPeers;
+      inherit toPeers toNonFlakeParts;
+    };
     flakeModules.asluni = { inherit wireguard; };
     nixosModules.asluni = { inherit wireguard; };
 
