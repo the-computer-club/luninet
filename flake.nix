@@ -12,6 +12,7 @@
     };
 
     luninet = import ./peers.nix;
+
     luninet-full =
       nixpkgs.lib.recursiveUpdate
         luninet
@@ -21,11 +22,11 @@
   in
   {
     inherit wireguard;
-
     lib = {
       toPeer = toPeers;
       inherit toPeers toNonFlakeParts;
     };
+
     flakeModules.asluni = { inherit wireguard; };
     nixosModules.asluni = { inherit wireguard; };
 
@@ -39,13 +40,13 @@
         ''
         ${pkgs.python3}/bin/python ${./ipv6-allocate.py} $@
         '';
-
+      
       update-inventory = pkgs.writeShellScriptBin "update-inventory"
         ''
         ${pkgs.lib.getExe ipv6-allocate} luni ${
           pkgs.writeText "current-inventory.json"
             (builtins.toJSON luninet)
-          }
+         }
         '';
 
       peerToml = pkgs.writeText "wgluni-peers.conf"

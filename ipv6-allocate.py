@@ -12,12 +12,6 @@ import ipaddress
 import sys
 from pathlib import Path
 
-# Constants for argument count validation
-MIN_ARGS_BASE = 3
-MIN_ARGS_CONTROLLER = 4
-MIN_ARGS_PEER = 4
-
-
 def hash_string(s: str) -> str:
     """Generate SHA256 hash of string."""
     return hashlib.sha256(s.encode()).hexdigest()
@@ -47,6 +41,32 @@ def generate_ula_prefix(instance_name: str) -> ipaddress.IPv6Network:
     return ipaddress.IPv6Network(prefix_formatted)
 
 
+def generate_ipv4_prefix(instance_name: str) -> ipaddress.IPv4Network:
+    """Generate a /16 prefix from instance name.
+
+    Format: 172.16.{8-bit hash}.{8-bit hash}/40
+    This gives us fd00:0000:0000::/40 through fdff:ffff:ff00::/40
+    """
+    h = hash_string(instance_name)
+
+    # For /40, we need 32 bits after 'fd' (8 hex chars)
+    # But only the first 32 bits count for the network prefix
+    # The last 8 bits of the 40-bit prefix must be 0
+    prefix_bits = int(h[:8], 16)
+
+    # Mask to ensure we only use the first 32 bits for /40
+    # This gives us addresses like fd28:387a::/40
+    prefix_bits = prefix_bits & 0xFFFFFF00  # Clear last 8 bits
+
+    # Format as IPv6 address
+    prefix = f"fd{prefix_bits:08x}"
+    prefix_formatted = f"{prefix[:4]}:{prefix[4:8]}::/40"
+
+    return ipaddress.IPv6Network(prefix_formatted)
+
+
+
+
 def generate_controller_subnet(
     base_network: ipaddress.IPv6Network,
     controller_name: str,
@@ -59,7 +79,7 @@ def generate_controller_subnet(
     h = hash_string(controller_name)
     # Take 16 bits from hash for the controller subnet ID
     controller_id = int(h[:4], 16)
-
+    
     # Create the controller subnet by adding the controller ID to the base network
     # The controller subnet is at base_prefix:controller_id::/56
     base_int = int(base_network.network_address)
@@ -85,7 +105,7 @@ def main() -> None:
     if len(sys.argv) < 1:
         print(
             "Usage: ipv6_allocator.py <instance_name> <jsonFile>",
-            """{ "hostname": { "publicKey": "...",  } }"""
+            """{ "hostname": { "publicKey": "...",  } } => { "hostname": { "publicKey": "...", "ips": [...] } }"""
 
         )
         sys.exit(1)
@@ -101,9 +121,8 @@ def main() -> None:
       data = json.load(fd)
 
     inventory = dict();
-
-    prefixes = dict();
-    suffixes = dict();
+    controllers = dict();
+    peers = dict();
 
     for hostname, vals in data.items():
       if "controller" in vals and vals["controller"]:
@@ -111,29 +130,19 @@ def main() -> None:
         prefix_str = str(subnet).split("/")[0].rstrip(":")
         while prefix_str.endswith(":"):
             prefix_str = prefix_str.rstrip(":")
-        prefixes[hostname] = prefix_str
+        controllers[hostname] = {"ipv6suffix": None, "ipv6prefix": prefix_str, "ipv6": [f"{prefix_str}::/56"] } 
       else:
-        suffixes[hostname] = generate_peer_suffix(hostname)
+        peers[hostname] = { "ipv6prefix": None, "ipv6suffix": generate_peer_suffix(hostname), "ipv6": [] }
 
-    view = {};
-    for controller, prefix in prefixes.items():
-      for hostname, suffix in suffixes.items():
-        if not hostname in view:
-            view[hostname] = { "ipv6": [] }
-
-        view[hostname]["ipv6"].append(f"{prefix}:{suffix}::/96")
-
-
-      # controller_view[controller] = peers
-
-    controllers = dict()
-    for k, x in prefixes.items():
-      controllers[k] = { "ipv6": [ f"{x}::/56" ] }
-
-
+    view = dict()
+    for controller, settings in controllers.items():
+      for hostname, suffix_settings in peers.items():
+        prefix = settings["ipv6prefix"];
+        suffix = suffix_settings["ipv6suffix"];
+        peers[hostname]["ipv6"].append(f"{prefix}:{suffix}::/96")
 
     print(json.dumps(
-      view | controllers
+      { "instanceName": instance_name, "ula": str(base_network), "network": peers | controllers | view }
     ))
 
 
