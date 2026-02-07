@@ -2,19 +2,15 @@
   cardinal = {
     controller = true;
     publicKey = "GfzR2IYKx6IBXwGVNSTVnCRcQSr/Wm5dlPwXHO2xykI=";
-    selfEndpoint = "72.72.233.131:12345";
-    ipv4 = [
-      "172.25.208.1/24" # luninet forwarding
-    ];
+    selfEndpoint = "72.11.152.185:31690";
+    ipv4 = ["172.25.208.1/24"];
   };
 
   proxybox = {
     controller = true;
     publicKey = "GfzR2IYKx6IBXwGVNSTVnCRcQSr/Wm5dlPwXHO2xykI=";
-    selfEndpoint = "72.72.233.131:12345";
-    ipv4 = [
-      "172.25.209.1/24" # luninet forwarding
-    ];
+    selfEndpoint = "198.12.96.43:24122";
+    ipv4 = ["172.25.209.1/24"];
   };
   
   hydrogen = {
