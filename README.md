@@ -21,7 +21,7 @@ To Join add yourself to the peer list inside `flake.nix`
     ...
   };
 ```
-- 4) `nix run .#update-inventory > inventory.json` 
+- 4) `nix run .#update-inventory | jq > inventory.json` 
 - 5) `git commit -m "add: your-hostname"` Setup a pull request on this repository.
 
 And you're done.
