@@ -1,13 +1,13 @@
 {
   cardinal = {
-    controller = true;
+    isController = true;
     publicKey = "GfzR2IYKx6IBXwGVNSTVnCRcQSr/Wm5dlPwXHO2xykI=";
     selfEndpoint = "72.11.152.185:31690";
     ipv4 = ["172.25.208.1/24"];
   };
 
   proxybox = {
-    controller = true;
+    isController = true;
     publicKey = "GfzR2IYKx6IBXwGVNSTVnCRcQSr/Wm5dlPwXHO2xykI=";
     selfEndpoint = "198.12.96.43:24122";
     ipv4 = ["172.25.209.1/24"];
