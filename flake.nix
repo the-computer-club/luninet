@@ -19,11 +19,6 @@
         (builtins.fromJSON (builtins.readFile ./inventory.json));
 
     luninetModule.wireguard.networks.luni.peers.by-name = luninet-full;
-
-    staticLuniRoutes.wireguard.networks.luni.peers.by-name = {
-      # cardinal.ipv4 = ["172.25.208.0/24"];
-      # proxybox.ipv4 = ["172.25.209.0/24"];
-    };
   in
   {
     lib = {
@@ -31,14 +26,8 @@
       inherit toPeers toNonFlakeParts;
     };
 
-    flakeModules.asluni.imports = [
-      luninetModule
-      staticLuniRoutes
-    ];
-    nixosModules.asluni.imports = [
-      luninetModule
-      staticLuniRoutes
-    ];
+    flakeModules.asluni = luninetModule;
+    nixosModules.asluni = luninetModule;
 
     packages = nixpkgs.lib.genAttrs ["x86_64-linux"] (system:
     let
