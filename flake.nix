@@ -16,7 +16,7 @@
     luninet-full =
       nixpkgs.lib.recursiveUpdate
         luninet
-        (builtins.fromJSON (builtins.readFile ./inventory.json));
+        (builtins.fromJSON (builtins.readFile ./inventory.json)).network;
 
     luninetModule.wireguard.networks.luni.peers.by-name = luninet-full;
   in
@@ -33,34 +33,62 @@
     let
       pkgs = import nixpkgs { inherit system; };
       lib = pkgs.lib;
+
+      peerToml = name: controllersOnly:
+        let
+          header = ''
+            [Interface]
+            Name = luni
+            DNS = 172.25.112.1
+            PrivateKey = 0000000000000000000000000
+          '';
+
+          body = (lib.pipe luninet-full [
+            (lib.mapAttrsToList (k: p: p // {hostname=k;}))
+            (x:
+              let
+                isController = p: p ? isController && p.isController;
+              in
+              if controllersOnly then
+                lib.filter(isController) x
+              else x
+            )
+            (map (p: lib.trim ''
+              [Peer]
+              # Name = ${p.hostname}
+              PublicKey = ${p.publicKey or ""}
+              AllowedIPs = ${lib.concatStringsSep ", " ((p.ipv4 or [])  ++ (p.ipv6 or []))}
+              ${if p?endpoint then "Endpoint = ${p.endpoint or ""}" else ""}
+              ${if p?persistentKeepalive then "PersistentKeepalive = ${p.persistentKeepalive or ""}" else ""} 
+              '')
+            )
+            (lib.concatStringsSep "\n")
+          ]);
+        in
+          (pkgs.writeText "luni-${name}.conf"
+            ''
+            ${header}
+            ${body}
+            ''
+          );
     in
-    rec {
-      ip-allocate = pkgs.writeShellScriptBin "ip-allocate"
-        ''
-        ${pkgs.python3}/bin/python ${./ip-allocate.py} $@
-        '';
-      
-      update-inventory = pkgs.writeShellScriptBin "update-inventory"
-        ''
-        ${pkgs.lib.getExe ip-allocate} luni ${
-          pkgs.writeText "current-inventory.json"
-            (builtins.toJSON luninet)
-         }
-        '';
-
-      peerToml = pkgs.writeText "wgluni-peers.conf"
-        (lib.pipe luninet-full [
-          (map (p:
+      rec {
+        wg-quick-controller = peerToml "controller" false;
+        wg-quick = peerToml "peer" true;
+        default = wg-quick;
+        
+        ip-allocate = pkgs.writeShellScriptBin "ip-allocate"
           ''
-          [Peer]
-          PublicKey = ${p.publicKey or ""}
-          AllowedIPs = ${lib.concatStringsSep ", " ((p.ipv4 or [])  ++ (p.ipv6 or []))}
-          Endpoint = ${p.endpoint or ""}
-          PersistentKeepalive = ${p.persistentKeepalive or ""}
-          ''))
+          ${pkgs.python3}/bin/python ${./ip-allocate.py} $@
+          '';
 
-          (lib.concatStringsSep "\n")
-        ]);
-      });
-    };
+        update-inventory = pkgs.writeShellScriptBin "update-inventory"
+          ''
+          ${pkgs.lib.getExe ip-allocate} luni ${
+            pkgs.writeText "current-inventory.json"
+              (builtins.toJSON luninet)
+          }
+          '';
+    });
+  };
 }
