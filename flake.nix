@@ -36,14 +36,14 @@
       lib = pkgs.lib;
     in
     rec {
-      ipv6-allocate = pkgs.writeShellScriptBin "ipv6-allocate"
+      ip-allocate = pkgs.writeShellScriptBin "ip-allocate"
         ''
-        ${pkgs.python3}/bin/python ${./ipv6-allocate.py} $@
+        ${pkgs.python3}/bin/python ${./ip-allocate.py} $@
         '';
       
       update-inventory = pkgs.writeShellScriptBin "update-inventory"
         ''
-        ${pkgs.lib.getExe ipv6-allocate} luni ${
+        ${pkgs.lib.getExe ip-allocate} luni ${
           pkgs.writeText "current-inventory.json"
             (builtins.toJSON luninet)
          }
