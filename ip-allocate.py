@@ -30,6 +30,7 @@ IPv6 options:
   --6base LEN           ULA base prefix len          (default: 48)
   --6controller LEN     controller prefix len        (default: 64)
   --6peer LEN           peer subnet prefix len       (default: 96)
+  --6instance-bits BITS bits of instance hash in ULA prefix (default: --6base - 8)
 
 Examples
 --------
@@ -149,20 +150,30 @@ def ipv4_allocate_peer(
 # IPv6 allocation
 # ---------------------------------------------------------------------------
 
-def ipv6_ula_base(instance_name: str, base_prefix_len: int) -> ipaddress.IPv6Network:
+def ipv6_ula_base(
+    instance_name: str,
+    base_prefix_len: int,
+    instance_hash_bits: int,
+) -> ipaddress.IPv6Network:
     """Return the ULA base network for *instance_name* at *base_prefix_len*.
 
-    Always uses the fd::/8 ULA range.  The (base_prefix_len - 8) bits after
-    'fd' are filled from the top bits of the SHA-256 hash of instance_name.
+    Always uses the fd::/8 ULA range.  *instance_hash_bits* controls how many
+    bits from the SHA-256 hash of *instance_name* are embedded in the prefix,
+    starting immediately after the 'fd' byte.  Any remaining prefix bits
+    (between the hash segment and the end of the prefix) are zero.
+
+    Examples with --6base 48:
+      instance_hash_bits=40  ->  fd{h0}:{h1}:{h2}::/48  (full hash, default)
+      instance_hash_bits=32  ->  fd{h0}:{h1}:0000::/48  (upper 32 bits only)
+      instance_hash_bits=16  ->  fd{h0}:0000:0000::/48
     """
     h = hash_int(instance_name)
-    # How many bits come from the hash (everything after the 'fd' byte).
-    net_bits = base_prefix_len - 8
-    # Pull exactly that many bits from the top of the 256-bit hash.
-    hash_segment = top_bits(h, net_bits)
-    # Build the 128-bit address: 'fd' at bits 127-120, hash below that.
+    # Pull exactly instance_hash_bits from the top of the SHA-256 hash.
+    hash_segment = top_bits(h, instance_hash_bits)
+    # Place them immediately after the 'fd' byte (shift so MSB of hash_segment
+    # sits at bit 119, i.e. just below the fd byte at bits 127-120).
     fd_int = 0xfd << 120
-    hash_int_ = hash_segment << (128 - base_prefix_len)
+    hash_int_ = hash_segment << (128 - 8 - instance_hash_bits)
     return ipaddress.IPv6Network((fd_int | hash_int_, base_prefix_len))
 
 
@@ -274,6 +285,17 @@ def parse_args() -> argparse.Namespace:
         metavar="LEN",
         help="peer subnet prefix length (default: 96)",
     )
+    v6.add_argument(
+        "--6instance-bits",
+        dest="v6instance_bits",
+        type=int,
+        default=None,
+        metavar="BITS",
+        help=(
+            "how many bits from the instance name hash to embed in the ULA prefix "
+            "after the 'fd' byte (default: --6base - 8, i.e. fill the whole prefix)"
+        ),
+    )
     p.add_argument("instance_name", help="name of this WireGuard instance / tenant")
     p.add_argument("json_file", help="path to the network inventory JSON file")
     return p.parse_args()
@@ -286,6 +308,7 @@ def validate(
     v6base_len: int,
     v6ctrl_len: int,
     v6peer_len: int,
+    v6instance_bits: int,
 ) -> None:
     errors = []
     # IPv4
@@ -320,6 +343,14 @@ def validate(
             f"--6peer {v6peer_len} - --6controller {v6ctrl_len} = {peer_id_bits} bits, "
             f"but the peer suffix is only 64 bits wide; maximum --6peer is {v6ctrl_len + 64}"
         )
+    max_instance_bits = v6base_len - 8
+    if v6instance_bits < 1:
+        errors.append(f"--6instance-bits {v6instance_bits} must be at least 1")
+    elif v6instance_bits > max_instance_bits:
+        errors.append(
+            f"--6instance-bits {v6instance_bits} exceeds the available prefix space: "
+            f"--6base {v6base_len} - 8 (fd byte) = {max_instance_bits} bits max"
+        )
     if errors:
         for e in errors:
             print(f"ERROR: {e}", file=sys.stderr)
@@ -339,7 +370,9 @@ def main() -> None:
         print(f"ERROR: invalid --root '{args.root}': {e}", file=sys.stderr)
         sys.exit(1)
 
-    validate(root, args.tenant, args.controller, args.v6base, args.v6controller, args.v6peer)
+    # Default: use all available bits after the fd byte
+    v6instance_bits = args.v6instance_bits if args.v6instance_bits is not None else args.v6base - 8
+    validate(root, args.tenant, args.controller, args.v6base, args.v6controller, args.v6peer, v6instance_bits)
 
     with open(args.json_file) as fd:
         data = json.load(fd)
@@ -358,7 +391,7 @@ def main() -> None:
     ipv4_slots: dict[str, int] = {}
 
     # -- IPv6 ULA base -------------------------------------------------------
-    ipv6_base = ipv6_ula_base(args.instance_name, v6base_len)
+    ipv6_base = ipv6_ula_base(args.instance_name, v6base_len, v6instance_bits)
 
     # -----------------------------------------------------------------------
     # Phase 1 - classify nodes, allocate controller subnets
@@ -433,6 +466,7 @@ def main() -> None:
         },
         "ipv6": {
             "base":               str(ipv6_base),
+            "instanceHashBits":   v6instance_bits,
             "controllerPrefixLen": v6ctrl_len,
             "peerPrefixLen":       v6peer_len,
         },
