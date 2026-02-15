@@ -12,8 +12,8 @@ Network layout — IPv4
 
 Network layout — IPv6
 ---------------------
-- Base:        ULA fd.../N                  (default: /40)  derived from instance_name
-- Controllers: configurable prefix len      (default: /56)  carved from base
+- Base:        ULA fd.../N                  (default: /48)  derived from instance_name
+- Controllers: configurable prefix len      (default: /64)  carved from base
 - Peers:       configurable prefix len      (default: /96)  carved from controller,
                suffix from SHA-256 of peer_name, reused identically across all controllers.
 
@@ -27,8 +27,8 @@ IPv4 options:
   --controller LEN      controller prefix len        (default: 24)
 
 IPv6 options:
-  --6base LEN           ULA base prefix len          (default: 40)
-  --6controller LEN     controller prefix len        (default: 56)
+  --6base LEN           ULA base prefix len          (default: 48)
+  --6controller LEN     controller prefix len        (default: 64)
   --6peer LEN           peer subnet prefix len       (default: 96)
 
 Examples
@@ -254,17 +254,17 @@ def parse_args() -> argparse.Namespace:
         "--6base",
         dest="v6base",
         type=int,
-        default=40,
+        default=48,
         metavar="LEN",
-        help="ULA base prefix length (default: 40)",
+        help="ULA base prefix length (default: 48)",
     )
     v6.add_argument(
         "--6controller",
         dest="v6controller",
         type=int,
-        default=56,
+        default=64,
         metavar="LEN",
-        help="controller subnet prefix length (default: 56)",
+        help="controller subnet prefix length (default: 64)",
     )
     v6.add_argument(
         "--6peer",
@@ -297,9 +297,9 @@ def validate(
         errors.append(
             f"--controller {controller_len} must be greater than --tenant {tenant_len}"
         )
-    if controller_len > 31:
+    if controller_len > 30:
         errors.append(
-            f"--controller {controller_len} must be <= 31 to leave room for host addresses"
+            f"--controller {controller_len} must be <= 30 to leave room for host addresses"
         )
     # IPv6
     if not (8 < v6base_len < 128):
@@ -442,4 +442,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
