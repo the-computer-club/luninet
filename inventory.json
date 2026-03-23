@@ -1,14 +1,14 @@
 {
   "instanceName": "luni",
   "ipv4": {
-    "root": "172.29.80.0/24",
-    "tenant": "172.29.80.0/24",
+    "root": "172.29.80.0/23",
+    "tenant": "172.29.80.0/23",
     "tenantCount": 1,
-    "controllersPerTenant": 64
+    "controllersPerTenant": 2
   },
   "ipv6": {
-    "base": "fd40::/12",
-    "instanceHashBits": 2,
+    "base": "fd00::/9",
+    "instanceHashBits": 1,
     "controllerPrefixLen": 48,
     "peerPrefixLen": 64
   },
@@ -17,100 +17,100 @@
       "isController": true,
       "publicKey": "GfzR2IYKx6IBXwGVNSTVnCRcQSr/Wm5dlPwXHO2xykI=",
       "ipv4": [
-        "172.29.80.56/30"
+        "172.29.80.1/24"
       ],
       "ipv6": [
-        "fd44:ea5e:e68f::/48"
+        "fd49:93b:2b68::/48"
       ]
     },
     "comet": {
       "publicKey": "w90lfP16gY5debtjkfKVyKdL8mtlEXUmciNRTyTi7jw=",
       "ipv4": [
-        "172.29.80.124/32"
+        "172.29.80.2/32"
       ],
       "ipv6": [
-        "fd44:ea5e:e68f:d51f::/64"
+        "fd49:93b:2b68:d51f::/64"
       ]
     },
     "fluorine": {
       "publicKey": "fCw+r4TKsxh36CdDSc6BTf0an9F2O8KQ189dYukpFHs=",
       "ipv4": [
-        "172.29.80.191/32"
+        "172.29.80.3/32"
       ],
       "ipv6": [
-        "fd44:ea5e:e68f:7226::/64"
+        "fd49:93b:2b68:7226::/64"
       ]
     },
     "frogson": {
       "publicKey": "5j44nM6qmbJ2S8B24aA/H6UEPVXJFfxf8sTacMktMis=",
       "ipv4": [
-        "172.29.80.127/32"
+        "172.29.80.4/32"
       ],
       "ipv6": [
-        "fd44:ea5e:e68f:5017::/64"
+        "fd49:93b:2b68:5017::/64"
       ]
     },
     "hexi": {
       "publicKey": "UHmZ/pzB5cUFGEm9708pdG42vYVO+IkqtzeNaBAseWg=",
       "ipv4": [
-        "172.29.80.255/32"
+        "172.29.80.5/32"
       ],
       "ipv6": [
-        "fd44:ea5e:e68f:5cda::/64"
+        "fd49:93b:2b68:5cda::/64"
       ]
     },
     "hypothalamus": {
       "publicKey": "9yzjykzsSnDxXA15sRf+PW/V3HFMxA3ZWTwngOWlUHk=",
       "ipv4": [
-        "172.29.80.188/32"
+        "172.29.80.6/32"
       ],
       "ipv6": [
-        "fd44:ea5e:e68f:8ed0::/64"
+        "fd49:93b:2b68:8ed0::/64"
       ]
     },
     "mesalon": {
       "publicKey": "NBXhSrqgTN2LDfJ6MhqVwWFfxyBaqBjR5fYfLjb+gg8=",
       "ipv4": [
-        "172.29.80.56/32"
+        "172.29.80.7/32"
       ],
       "ipv6": [
-        "fd44:ea5e:e68f:72d1::/64"
+        "fd49:93b:2b68:72d1::/64"
       ]
     },
     "mesalon-vps": {
       "publicKey": "/6egVjOjIIgxEzBAW+SWjSTmauxA5spi8cVAaQUX5GY=",
       "ipv4": [
-        "172.29.80.255/32"
+        "172.29.80.8/32"
       ],
       "ipv6": [
-        "fd44:ea5e:e68f:a94f::/64"
+        "fd49:93b:2b68:a94f::/64"
       ]
     },
     "ov13": {
       "publicKey": "S6yiCMatKlVX0WxyaWXTizasZPfQQ9oGM2pv82CtrgM=",
       "ipv4": [
-        "172.29.80.122/32"
+        "172.29.80.9/32"
       ],
       "ipv6": [
-        "fd44:ea5e:e68f:70b2::/64"
+        "fd49:93b:2b68:70b2::/64"
       ]
     },
     "simcra": {
       "publicKey": "pq529jYwkJZZzdWB2fJ08A+41prV5gVsg3iE/kVN0GQ=",
       "ipv4": [
-        "172.29.80.189/32"
+        "172.29.80.10/32"
       ],
       "ipv6": [
-        "fd44:ea5e:e68f:810e::/64"
+        "fd49:93b:2b68:810e::/64"
       ]
     },
     "tangobee": {
       "publicKey": "5kGzZgx1QMLvdm7OsZoMzG7NC/4Pf3/S2MKFAvcR5wU=",
       "ipv4": [
-        "172.29.80.184/32"
+        "172.29.80.11/32"
       ],
       "ipv6": [
-        "fd44:ea5e:e68f:2383::/64"
+        "fd49:93b:2b68:2383::/64"
       ]
     }
   }

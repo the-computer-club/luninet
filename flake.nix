@@ -88,9 +88,9 @@
         update-inventory = pkgs.writeShellScriptBin "update-inventory"
           ''
           ${pkgs.lib.getExe ip-allocate} \
-              --tenant 24 \
+              --tenant 23 \
               --controller 24 \
-              --root 172.29.80.0/24 \
+              --root 172.29.80.0/23 \
               --6peer 64 \
               --6base 9 \
               --6controller 48 \
