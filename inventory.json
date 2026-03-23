@@ -1,203 +1,116 @@
 {
   "instanceName": "luni",
   "ipv4": {
-    "root": "172.25.0.0/16",
-    "tenant": "172.25.112.0/21",
-    "tenantCount": 32,
-    "controllersPerTenant": 8
+    "root": "172.29.80.0/24",
+    "tenant": "172.29.80.0/24",
+    "tenantCount": 1,
+    "controllersPerTenant": 64
   },
   "ipv6": {
-    "base": "fd6e:bd00:4b75::/48",
-    "instanceHashBits": 40,
-    "controllerPrefixLen": 56,
+    "base": "fd40::/12",
+    "instanceHashBits": 2,
+    "controllerPrefixLen": 48,
     "peerPrefixLen": 64
   },
   "network": {
-    "cardinal": {
+    "gateway": {
       "isController": true,
       "publicKey": "GfzR2IYKx6IBXwGVNSTVnCRcQSr/Wm5dlPwXHO2xykI=",
-      "selfEndpoint": "72.11.152.185:31690",
       "ipv4": [
-        "172.25.114.0/24"
+        "172.29.80.56/30"
       ],
       "ipv6": [
-        "fd6e:bd00:4b75:2a00::/56"
-      ]
-    },
-    "proxybox": {
-      "isController": true,
-      "publicKey": "GfzR2IYKx6IBXwGVNSTVnCRcQSr/Wm5dlPwXHO2xykI=",
-      "selfEndpoint": "198.12.96.43:24122",
-      "ipv4": [
-        "172.25.115.0/24"
-      ],
-      "ipv6": [
-        "fd6e:bd00:4b75:b200::/56"
-      ]
-    },
-    "argon": {
-      "publicKey": "YO5w0tMvPt2lDdg9eD25wZsz9rWMTGbA/KuPYB6F1jQ=",
-      "ipv4": [
-        "172.25.114.75/32",
-        "172.25.115.75/32"
-      ],
-      "ipv6": [
-        "fd6e:bd00:4b75:2aee::/64",
-        "fd6e:bd00:4b75:b2ee::/64"
+        "fd44:ea5e:e68f::/48"
       ]
     },
     "comet": {
       "publicKey": "w90lfP16gY5debtjkfKVyKdL8mtlEXUmciNRTyTi7jw=",
       "ipv4": [
-        "172.25.114.76/32",
-        "172.25.115.76/32"
+        "172.29.80.124/32"
       ],
       "ipv6": [
-        "fd6e:bd00:4b75:2ad5::/64",
-        "fd6e:bd00:4b75:b2d5::/64"
+        "fd44:ea5e:e68f:d51f::/64"
       ]
     },
     "fluorine": {
       "publicKey": "fCw+r4TKsxh36CdDSc6BTf0an9F2O8KQ189dYukpFHs=",
       "ipv4": [
-        "172.25.114.183/32",
-        "172.25.115.183/32"
+        "172.29.80.191/32"
       ],
       "ipv6": [
-        "fd6e:bd00:4b75:2a72::/64",
-        "fd6e:bd00:4b75:b272::/64"
+        "fd44:ea5e:e68f:7226::/64"
       ]
     },
     "frogson": {
       "publicKey": "5j44nM6qmbJ2S8B24aA/H6UEPVXJFfxf8sTacMktMis=",
       "ipv4": [
-        "172.25.114.71/32",
-        "172.25.115.71/32"
+        "172.29.80.127/32"
       ],
       "ipv6": [
-        "fd6e:bd00:4b75:2a50::/64",
-        "fd6e:bd00:4b75:b250::/64"
-      ]
-    },
-    "helium": {
-      "publicKey": "1OisEbl0ZTfqbUxrzMfKtoMD7Kz9VFahr0d+kpe9QB0=",
-      "ipv4": [
-        "172.25.114.194/32",
-        "172.25.115.194/32"
-      ],
-      "ipv6": [
-        "fd6e:bd00:4b75:2aca::/64",
-        "fd6e:bd00:4b75:b2ca::/64"
+        "fd44:ea5e:e68f:5017::/64"
       ]
     },
     "hexi": {
       "publicKey": "UHmZ/pzB5cUFGEm9708pdG42vYVO+IkqtzeNaBAseWg=",
       "ipv4": [
-        "172.25.114.215/32",
-        "172.25.115.215/32"
+        "172.29.80.255/32"
       ],
       "ipv6": [
-        "fd6e:bd00:4b75:2a5c::/64",
-        "fd6e:bd00:4b75:b25c::/64"
-      ]
-    },
-    "hydrogen": {
-      "publicKey": "qXsTs+IsmHeq9+rulmG6M7XhVgu/3N/wEgEaHPuHciU=",
-      "ipv4": [
-        "172.25.114.179/32",
-        "172.25.115.179/32"
-      ],
-      "ipv6": [
-        "fd6e:bd00:4b75:2ae7::/64",
-        "fd6e:bd00:4b75:b2e7::/64"
+        "fd44:ea5e:e68f:5cda::/64"
       ]
     },
     "hypothalamus": {
       "publicKey": "9yzjykzsSnDxXA15sRf+PW/V3HFMxA3ZWTwngOWlUHk=",
       "ipv4": [
-        "172.25.114.156/32",
-        "172.25.115.156/32"
+        "172.29.80.188/32"
       ],
       "ipv6": [
-        "fd6e:bd00:4b75:2a8e::/64",
-        "fd6e:bd00:4b75:b28e::/64"
+        "fd44:ea5e:e68f:8ed0::/64"
       ]
     },
     "mesalon": {
       "publicKey": "NBXhSrqgTN2LDfJ6MhqVwWFfxyBaqBjR5fYfLjb+gg8=",
       "ipv4": [
-        "172.25.114.56/32",
-        "172.25.115.56/32"
+        "172.29.80.56/32"
       ],
       "ipv6": [
-        "fd6e:bd00:4b75:2a72::/64",
-        "fd6e:bd00:4b75:b272::/64"
+        "fd44:ea5e:e68f:72d1::/64"
       ]
     },
     "mesalon-vps": {
       "publicKey": "/6egVjOjIIgxEzBAW+SWjSTmauxA5spi8cVAaQUX5GY=",
       "ipv4": [
-        "172.25.114.231/32",
-        "172.25.115.231/32"
+        "172.29.80.255/32"
       ],
       "ipv6": [
-        "fd6e:bd00:4b75:2aa9::/64",
-        "fd6e:bd00:4b75:b2a9::/64"
+        "fd44:ea5e:e68f:a94f::/64"
       ]
     },
     "ov13": {
       "publicKey": "S6yiCMatKlVX0WxyaWXTizasZPfQQ9oGM2pv82CtrgM=",
       "ipv4": [
-        "172.25.114.114/32",
-        "172.25.115.114/32"
+        "172.29.80.122/32"
       ],
       "ipv6": [
-        "fd6e:bd00:4b75:2a70::/64",
-        "fd6e:bd00:4b75:b270::/64"
-      ]
-    },
-    "quantum": {
-      "publicKey": "FuOo9TwnE8P/zDBorjGNtsyPImHsHPxA21ePNrElsD0=",
-      "ipv4": [
-        "172.25.114.84/32",
-        "172.25.115.84/32"
-      ],
-      "ipv6": [
-        "fd6e:bd00:4b75:2a8f::/64",
-        "fd6e:bd00:4b75:b28f::/64"
-      ]
-    },
-    "scott": {
-      "publicKey": "5W6KorrxAf3MWErAYlgSXcGUNEJfBwPTBlyEfRRfeXU=",
-      "ipv4": [
-        "172.25.114.97/32",
-        "172.25.115.97/32"
-      ],
-      "ipv6": [
-        "fd6e:bd00:4b75:2a12::/64",
-        "fd6e:bd00:4b75:b212::/64"
+        "fd44:ea5e:e68f:70b2::/64"
       ]
     },
     "simcra": {
       "publicKey": "pq529jYwkJZZzdWB2fJ08A+41prV5gVsg3iE/kVN0GQ=",
       "ipv4": [
-        "172.25.114.189/32",
-        "172.25.115.189/32"
+        "172.29.80.189/32"
       ],
       "ipv6": [
-        "fd6e:bd00:4b75:2a81::/64",
-        "fd6e:bd00:4b75:b281::/64"
+        "fd44:ea5e:e68f:810e::/64"
       ]
     },
     "tangobee": {
       "publicKey": "5kGzZgx1QMLvdm7OsZoMzG7NC/4Pf3/S2MKFAvcR5wU=",
       "ipv4": [
-        "172.25.114.152/32",
-        "172.25.115.152/32"
+        "172.29.80.184/32"
       ],
       "ipv6": [
-        "fd6e:bd00:4b75:2a23::/64",
-        "fd6e:bd00:4b75:b223::/64"
+        "fd44:ea5e:e68f:2383::/64"
       ]
     }
   }

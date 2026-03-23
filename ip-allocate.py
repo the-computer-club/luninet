@@ -1,306 +1,167 @@
 #!/usr/bin/env python3
-"""IPv4 + IPv6 address allocator for WireGuard networks.
 
+#!/usr/bin/env python3
+"""IPv4 + IPv6 address allocator for WireGuard networks.
+ 
 Network layout — IPv4
 ---------------------
 - Root:        configurable CIDR            (default: 172.25.0.0/16)
 - Tenant:      configurable prefix len      (default: /21)  carved from root
-- Controllers: configurable prefix len      (default: /24)  carved from tenant
-- Peers:       /32 host address inside each controller's subnet.
-               Last octet = sum(ord(c)+10 for c in name) % 255, clamped 1-254.
-               Collisions resolved by decrementing (wrapping 1-254).
-
+- Controllers: configurable prefix len      (default: /24)  carved from tenant, sequential
+- Controller host address: always .1 within its subnet
+- Peers:       /32 host addresses inside each controller's subnet, sequential from .2
+ 
+  If a controller has an explicit ipv4 field in the JSON, that subnet is used
+  directly instead of being allocated sequentially from the tenant block.
+ 
 Network layout — IPv6
 ---------------------
 - Base:        ULA fd.../N                  (default: /48)  derived from instance_name
 - Controllers: configurable prefix len      (default: /64)  carved from base
 - Peers:       configurable prefix len      (default: /96)  carved from controller,
                suffix from SHA-256 of peer_name, reused identically across all controllers.
-
+ 
+  If a controller has an explicit ipv6 field in the JSON, that subnet is used
+  directly instead of being derived from the base.
+ 
 Usage
 -----
   allocator.py [options] <instance_name> <json_file>
-
+ 
 IPv4 options:
   --root CIDR           IPv4 root network            (default: 172.25.0.0/16)
   --tenant LEN          tenant prefix len            (default: 21)
   --controller LEN      controller prefix len        (default: 24)
-
+ 
 IPv6 options:
   --6base LEN           ULA base prefix len          (default: 48)
   --6controller LEN     controller prefix len        (default: 64)
   --6peer LEN           peer subnet prefix len       (default: 96)
   --6instance-bits BITS bits of instance hash in ULA prefix (default: --6base - 8)
-
+ 
 Examples
 --------
   allocator.py luni network.json
   allocator.py --root 10.0.0.0/8 --tenant 16 --controller 24 luni network.json
   allocator.py --6base 48 --6controller 64 --6peer 96 luni network.json
-  allocator.py --root 172.16.0.0/12 --tenant 20 --controller 24 \\
-               --6base 48 --6controller 64 --6peer 112 acme network.json
 """
 import argparse
+import ipaddress
 import json
 import hashlib
-import ipaddress
 import sys
-
-IPV4_RESERVED = {0, 255}
-
-
+ 
+ 
 # ---------------------------------------------------------------------------
-# Shared helpers
+# Helpers
 # ---------------------------------------------------------------------------
-
-def hash_string(s: str) -> str:
-    """SHA-256 hex digest of *s*."""
-    return hashlib.sha256(s.encode()).hexdigest()
-
-
+ 
 def hash_int(s: str) -> int:
-    """SHA-256 of *s* as a 256-bit integer."""
-    return int(hash_string(s), 16)
-
-
+    return int(hashlib.sha256(s.encode()).hexdigest(), 16)
+ 
+ 
 def top_bits(value: int, n: int, source_width: int = 256) -> int:
-    """Return the top *n* bits of *value* (which is *source_width* bits wide)."""
     return value >> (source_width - n)
-
-
+ 
+ 
 def is_controller(vals: dict) -> bool:
     return bool(vals.get("controller") or vals.get("isController"))
-
-
+ 
+ 
 # ---------------------------------------------------------------------------
-# IPv4 allocation
+# IPv4
 # ---------------------------------------------------------------------------
-
+ 
 def ipv4_tenant_subnet(
     root: ipaddress.IPv4Network,
     tenant_prefix_len: int,
     instance_name: str,
 ) -> ipaddress.IPv4Network:
-    """Return the tenant block for *instance_name* carved from *root*."""
+    """Pick a tenant block from *root* based on a hash of *instance_name*."""
     tenant_count = 2 ** (tenant_prefix_len - root.prefixlen)
-    h = hash_int(instance_name)
-    tenant_index = top_bits(h, 8) % tenant_count
-    root_int = int(root.network_address)
-    tenant_int = root_int + tenant_index * (2 ** (32 - tenant_prefix_len))
+    tenant_index = top_bits(hash_int(instance_name), 8) % tenant_count
+    tenant_int = int(root.network_address) + tenant_index * (2 ** (32 - tenant_prefix_len))
     return ipaddress.IPv4Network((tenant_int, tenant_prefix_len))
-
-
-def ipv4_controller_subnet(
+ 
+ 
+def ipv4_subnets(
     tenant: ipaddress.IPv4Network,
     controller_prefix_len: int,
-    controller_name: str,
-    allocated_slots: dict[str, int],
-) -> ipaddress.IPv4Network:
-    """Return a controller subnet inside *tenant* for *controller_name*."""
-    controllers_per_tenant = 2 ** (controller_prefix_len - tenant.prefixlen)
-    h = hash_int(controller_name)
-    candidate = top_bits(h, 8) % controllers_per_tenant
-
-    used = set(allocated_slots.values())
-    for _ in range(controllers_per_tenant):
-        if candidate not in used:
-            allocated_slots[controller_name] = candidate
-            tenant_int = int(tenant.network_address)
-            subnet_int = tenant_int + candidate * (2 ** (32 - controller_prefix_len))
-            return ipaddress.IPv4Network((subnet_int, controller_prefix_len))
-        candidate = (candidate + 1) % controllers_per_tenant
-
-    print(
-        f"ERROR: Cannot allocate a /{controller_prefix_len} for controller "
-        f"'{controller_name}': all {controllers_per_tenant} slots in {tenant} are in use.",
-        file=sys.stderr,
-    )
-    sys.exit(1)
-
-
-def ipv4_peer_suffix(peer_name: str) -> int:
-    """Return the preferred last-octet value for *peer_name* (1-254)."""
-    raw = sum(ord(c) + 10 for c in peer_name) % 255
-    return raw if raw != 0 else 1
-
-
-def ipv4_allocate_peer(
-    controller_subnet: ipaddress.IPv4Network,
-    preferred: int,
-    occupied: set[int],
-) -> int:
-    """Find a free last-octet in *controller_subnet*, decrementing on conflict."""
-    candidate = preferred
-    for _ in range(254):
-        if candidate not in IPV4_RESERVED and candidate not in occupied:
-            return candidate
-        candidate -= 1
-        if candidate < 1:
-            candidate = 254
-
-    print(
-        f"ERROR: Cannot allocate a /32 inside {controller_subnet}: "
-        "all host addresses are occupied.",
-        file=sys.stderr,
-    )
-    sys.exit(1)
-
-
+) -> list[ipaddress.IPv4Network]:
+    """Return all controller-sized subnets within *tenant*, in order."""
+    return list(tenant.subnets(new_prefix=controller_prefix_len))
+ 
+ 
 # ---------------------------------------------------------------------------
-# IPv6 allocation
+# IPv6
 # ---------------------------------------------------------------------------
-
+ 
 def ipv6_ula_base(
     instance_name: str,
     base_prefix_len: int,
     instance_hash_bits: int,
 ) -> ipaddress.IPv6Network:
-    """Return the ULA base network for *instance_name* at *base_prefix_len*.
-
-    Always uses the fd::/8 ULA range.  *instance_hash_bits* controls how many
-    bits from the SHA-256 hash of *instance_name* are embedded in the prefix,
-    starting immediately after the 'fd' byte.  Any remaining prefix bits
-    (between the hash segment and the end of the prefix) are zero.
-
-    Examples with --6base 48:
-      instance_hash_bits=40  ->  fd{h0}:{h1}:{h2}::/48  (full hash, default)
-      instance_hash_bits=32  ->  fd{h0}:{h1}:0000::/48  (upper 32 bits only)
-      instance_hash_bits=16  ->  fd{h0}:0000:0000::/48
-    """
     h = hash_int(instance_name)
-    # Pull exactly instance_hash_bits from the top of the SHA-256 hash.
     hash_segment = top_bits(h, instance_hash_bits)
-    # Place them immediately after the 'fd' byte (shift so MSB of hash_segment
-    # sits at bit 119, i.e. just below the fd byte at bits 127-120).
     fd_int = 0xfd << 120
-    hash_int_ = hash_segment << (128 - 8 - instance_hash_bits)
-    return ipaddress.IPv6Network((fd_int | hash_int_, base_prefix_len))
-
-
+    hash_placed = hash_segment << (128 - 8 - instance_hash_bits)
+    return ipaddress.IPv6Network((fd_int | hash_placed, base_prefix_len))
+ 
+ 
 def ipv6_controller_subnet(
     base: ipaddress.IPv6Network,
     controller_prefix_len: int,
     controller_name: str,
 ) -> ipaddress.IPv6Network:
-    """Return a controller subnet of *controller_prefix_len* inside *base*."""
     h = hash_int(controller_name)
     id_bits = controller_prefix_len - base.prefixlen
-    # Take the top id_bits from the hash as the controller ID.
     controller_id = top_bits(h, id_bits)
-    base_int = int(base.network_address)
-    subnet_int = base_int | (controller_id << (128 - controller_prefix_len))
+    subnet_int = int(base.network_address) | (controller_id << (128 - controller_prefix_len))
     return ipaddress.IPv6Network((subnet_int, controller_prefix_len))
-
-
-def ipv6_peer_id(peer_name: str) -> int:
-    """Return a 64-bit peer identifier derived from *peer_name*.
-
-    The same value is used across all controllers so the peer always appears
-    at a consistent offset within each controller's subnet.
-    """
-    return top_bits(hash_int(peer_name), 64)
-
-
+ 
+ 
 def ipv6_peer_subnet(
     controller_subnet: ipaddress.IPv6Network,
     peer_prefix_len: int,
-    peer_id: int,
+    peer_name: str,
 ) -> ipaddress.IPv6Network:
-    """Return the peer's /peer_prefix_len subnet within *controller_subnet*.
-
-    The top (peer_prefix_len - controller_prefix_len) bits of *peer_id* are
-    placed immediately after the controller prefix, giving every peer a
-    consistent suffix across all controllers.
-    """
-    ctrl_len = controller_subnet.prefixlen
-    peer_id_bits = peer_prefix_len - ctrl_len
-    # Trim peer_id to only the bits we actually need.
-    peer_id_trimmed = peer_id >> (64 - peer_id_bits)
-    # Place those bits immediately after the controller prefix.
-    ctrl_int = int(controller_subnet.network_address)
-    peer_int = ctrl_int | (peer_id_trimmed << (128 - peer_prefix_len))
+    peer_id_bits = peer_prefix_len - controller_subnet.prefixlen
+    peer_id = top_bits(hash_int(peer_name), 64) >> (64 - peer_id_bits)
+    peer_int = int(controller_subnet.network_address) | (peer_id << (128 - peer_prefix_len))
     return ipaddress.IPv6Network((peer_int, peer_prefix_len))
-
-
+ 
+ 
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
-
+ 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="IPv4 + IPv6 WireGuard address allocator",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=(
-            "examples:\n"
-            "  allocator.py luni network.json\n"
-            "  allocator.py --root 10.0.0.0/8 --tenant 16 --controller 24 luni network.json\n"
-            "  allocator.py --6base 48 --6controller 64 --6peer 96 luni network.json\n"
-            "  allocator.py --root 172.16.0.0/12 --tenant 20 --controller 24 \\\n"
-            "               --6base 48 --6controller 64 --6peer 112 acme network.json"
-        ),
     )
     v4 = p.add_argument_group("IPv4")
-    v4.add_argument(
-        "--root",
-        default="172.25.0.0/16",
-        metavar="CIDR",
-        help="IPv4 root network (default: 172.25.0.0/16)",
-    )
-    v4.add_argument(
-        "--tenant",
-        type=int,
-        default=21,
-        metavar="LEN",
-        help="tenant prefix length carved from root (default: 21)",
-    )
-    v4.add_argument(
-        "--controller",
-        type=int,
-        default=24,
-        metavar="LEN",
-        help="controller prefix length carved from tenant (default: 24)",
-    )
+    v4.add_argument("--root", default="172.25.0.0/16", metavar="CIDR",
+                    help="IPv4 root network (default: 172.25.0.0/16)")
+    v4.add_argument("--tenant", type=int, default=21, metavar="LEN",
+                    help="tenant prefix length (default: 21)")
+    v4.add_argument("--controller", type=int, default=24, metavar="LEN",
+                    help="controller prefix length (default: 24)")
     v6 = p.add_argument_group("IPv6")
-    v6.add_argument(
-        "--6base",
-        dest="v6base",
-        type=int,
-        default=48,
-        metavar="LEN",
-        help="ULA base prefix length (default: 48)",
-    )
-    v6.add_argument(
-        "--6controller",
-        dest="v6controller",
-        type=int,
-        default=64,
-        metavar="LEN",
-        help="controller subnet prefix length (default: 64)",
-    )
-    v6.add_argument(
-        "--6peer",
-        dest="v6peer",
-        type=int,
-        default=96,
-        metavar="LEN",
-        help="peer subnet prefix length (default: 96)",
-    )
-    v6.add_argument(
-        "--6instance-bits",
-        dest="v6instance_bits",
-        type=int,
-        default=None,
-        metavar="BITS",
-        help=(
-            "how many bits from the instance name hash to embed in the ULA prefix "
-            "after the 'fd' byte (default: --6base - 8, i.e. fill the whole prefix)"
-        ),
-    )
-    p.add_argument("instance_name", help="name of this WireGuard instance / tenant")
-    p.add_argument("json_file", help="path to the network inventory JSON file")
+    v6.add_argument("--6base", dest="v6base", type=int, default=48, metavar="LEN",
+                    help="ULA base prefix length (default: 48)")
+    v6.add_argument("--6controller", dest="v6controller", type=int, default=64, metavar="LEN",
+                    help="controller subnet prefix length (default: 64)")
+    v6.add_argument("--6peer", dest="v6peer", type=int, default=96, metavar="LEN",
+                    help="peer subnet prefix length (default: 96)")
+    v6.add_argument("--6instance-bits", dest="v6instance_bits", type=int, default=None,
+                    metavar="BITS",
+                    help="bits of instance hash in ULA prefix (default: --6base - 8)")
+    p.add_argument("instance_name")
+    p.add_argument("json_file")
     return p.parse_args()
-
-
+ 
+ 
 def validate(
     root: ipaddress.IPv4Network,
     tenant_len: int,
@@ -311,151 +172,156 @@ def validate(
     v6instance_bits: int,
 ) -> None:
     errors = []
-    # IPv4
-    if tenant_len <= root.prefixlen:
-        errors.append(
-            f"--tenant {tenant_len} must be greater than root prefix /{root.prefixlen}"
-        )
-    if controller_len <= tenant_len:
-        errors.append(
-            f"--controller {controller_len} must be greater than --tenant {tenant_len}"
-        )
+    if tenant_len < root.prefixlen:
+        errors.append(f"--tenant {tenant_len} must be >= root prefix /{root.prefixlen}")
+    if controller_len < tenant_len:
+        errors.append(f"--controller {controller_len} must be > --tenant {tenant_len}")
     if controller_len > 30:
-        errors.append(
-            f"--controller {controller_len} must be <= 30 to leave room for host addresses"
-        )
-    # IPv6
+        errors.append(f"--controller {controller_len} must be <= 30")
     if not (8 < v6base_len < 128):
         errors.append(f"--6base {v6base_len} must be between 9 and 127")
     if v6ctrl_len <= v6base_len:
-        errors.append(
-            f"--6controller {v6ctrl_len} must be greater than --6base {v6base_len}"
-        )
+        errors.append(f"--6controller {v6ctrl_len} must be > --6base {v6base_len}")
     if v6peer_len <= v6ctrl_len:
-        errors.append(
-            f"--6peer {v6peer_len} must be greater than --6controller {v6ctrl_len}"
-        )
+        errors.append(f"--6peer {v6peer_len} must be > --6controller {v6ctrl_len}")
     if v6peer_len > 128:
         errors.append(f"--6peer {v6peer_len} must be <= 128")
-    peer_id_bits = v6peer_len - v6ctrl_len
-    if peer_id_bits > 64:
+    if (v6peer_len - v6ctrl_len) > 64:
         errors.append(
-            f"--6peer {v6peer_len} - --6controller {v6ctrl_len} = {peer_id_bits} bits, "
-            f"but the peer suffix is only 64 bits wide; maximum --6peer is {v6ctrl_len + 64}"
+            f"--6peer {v6peer_len} - --6controller {v6ctrl_len} exceeds 64-bit peer suffix; "
+            f"max --6peer is {v6ctrl_len + 64}"
         )
-    max_instance_bits = v6base_len - 8
-    if v6instance_bits < 1:
-        errors.append(f"--6instance-bits {v6instance_bits} must be at least 1")
-    elif v6instance_bits > max_instance_bits:
+    if not (1 <= v6instance_bits <= v6base_len - 8):
         errors.append(
-            f"--6instance-bits {v6instance_bits} exceeds the available prefix space: "
-            f"--6base {v6base_len} - 8 (fd byte) = {max_instance_bits} bits max"
+            f"--6instance-bits {v6instance_bits} must be between 1 and {v6base_len - 8}"
         )
     if errors:
         for e in errors:
             print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
-
-
+ 
+ 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
-
+ 
 def main() -> None:
     args = parse_args()
-
+ 
     try:
         root = ipaddress.IPv4Network(args.root, strict=True)
     except ValueError as e:
         print(f"ERROR: invalid --root '{args.root}': {e}", file=sys.stderr)
         sys.exit(1)
-
-    # Default: use all available bits after the fd byte
+ 
     v6instance_bits = args.v6instance_bits if args.v6instance_bits is not None else args.v6base - 8
     validate(root, args.tenant, args.controller, args.v6base, args.v6controller, args.v6peer, v6instance_bits)
-
-    with open(args.json_file) as fd:
-        data = json.load(fd)
-
-    tenant_prefix_len      = args.tenant
-    controller_prefix_len  = args.controller
-    tenant_count           = 2 ** (tenant_prefix_len - root.prefixlen)
-    controllers_per_tenant = 2 ** (controller_prefix_len - tenant_prefix_len)
-
-    v6base_len = args.v6base
+ 
+    with open(args.json_file) as f:
+        data = json.load(f)
+ 
+    ctrl_len = args.controller
     v6ctrl_len = args.v6controller
     v6peer_len = args.v6peer
-
-    # -- IPv4 tenant block ---------------------------------------------------
-    ipv4_tenant = ipv4_tenant_subnet(root, tenant_prefix_len, args.instance_name)
-    ipv4_slots: dict[str, int] = {}
-
-    # -- IPv6 ULA base -------------------------------------------------------
-    ipv6_base = ipv6_ula_base(args.instance_name, v6base_len, v6instance_bits)
-
+ 
+    # IPv4 tenant block and available controller subnets
+    ipv4_tenant = ipv4_tenant_subnet(root, args.tenant, args.instance_name)
+    available_subnets = ipv4_subnets(ipv4_tenant, ctrl_len)
+    subnet_iter = iter(available_subnets)
+ 
+    # IPv6 ULA base
+    ipv6_base = ipv6_ula_base(args.instance_name, args.v6base, v6instance_bits)
+ 
+    STRIP = {"ipv4", "ipv6"}
+ 
     # -----------------------------------------------------------------------
-    # Phase 1 - classify nodes, allocate controller subnets
+    # Phase 1 — controllers
     # -----------------------------------------------------------------------
     controllers: dict[str, dict] = {}
-    peers:       dict[str, dict] = {}
-
+ 
+    for hostname, vals in data.items():
+        if not is_controller(vals):
+            continue
+ 
+        # IPv4: use pinned subnet if provided, otherwise take the next sequential one
+        pinned_v4 = vals.get("ipv4")
+        if pinned_v4:
+            raw = pinned_v4 if isinstance(pinned_v4, str) else pinned_v4[0]
+            v4_subnet = ipaddress.IPv4Network(raw, strict=False)
+        else:
+            try:
+                v4_subnet = next(subnet_iter)
+            except StopIteration:
+                print(
+                    f"ERROR: ran out of /{ctrl_len} subnets in {ipv4_tenant} "
+                    f"while allocating controller '{hostname}'",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+ 
+        # IPv6: use pinned subnet if provided, otherwise derive from base
+        pinned_v6 = vals.get("ipv6")
+        if pinned_v6:
+            raw6 = pinned_v6 if isinstance(pinned_v6, str) else pinned_v6[0]
+            v6_subnet = ipaddress.IPv6Network(raw6, strict=False)
+        else:
+            v6_subnet = ipv6_controller_subnet(ipv6_base, v6ctrl_len, hostname)
+ 
+        # Controller always takes the first host address (.1)
+        ctrl_host_v4 = str(ipaddress.IPv4Address(int(v4_subnet.network_address) + 1))
+ 
+        controllers[hostname] = {
+            "v4_subnet":    v4_subnet,
+            "v6_subnet":    v6_subnet,
+            "ipv4":         [f"{ctrl_host_v4}/{ctrl_len}"],
+            "ipv6":         [str(v6_subnet)],
+            "_next_peer":   2,   # peers start at .2
+        }
+ 
+    # -----------------------------------------------------------------------
+    # Phase 2 — peers
+    # -----------------------------------------------------------------------
+    peers: dict[str, dict] = {}
+ 
     for hostname, vals in data.items():
         if is_controller(vals):
-            v4_subnet = ipv4_controller_subnet(
-                ipv4_tenant, controller_prefix_len, hostname, ipv4_slots
-            )
-            v6_subnet = ipv6_controller_subnet(ipv6_base, v6ctrl_len, hostname)
-
-            controllers[hostname] = {
-                "v4_subnet":    v4_subnet,
-                "v6_subnet":    v6_subnet,
-                "ipv4":         [str(v4_subnet)],
-                "ipv6":         [str(v6_subnet)],
-                "_v4_occupied": set(),
-            }
-        else:
-            peers[hostname] = {
-                "v4_preferred": ipv4_peer_suffix(hostname),
-                "v6_peer_id":   ipv6_peer_id(hostname),
-                "ipv4":         [],
-                "ipv6":         [],
-            }
-
-    # -----------------------------------------------------------------------
-    # Phase 2 - assign each peer an address in every controller's block
-    # -----------------------------------------------------------------------
-    for peer_name, peer in peers.items():
-        for ctrl_name, ctrl in controllers.items():
-            # IPv4 /32
-            last_octet = ipv4_allocate_peer(
-                ctrl["v4_subnet"], peer["v4_preferred"], ctrl["_v4_occupied"]
-            )
-            ctrl["_v4_occupied"].add(last_octet)
-            host_int = int(ctrl["v4_subnet"].network_address) | last_octet
-            peer["ipv4"].append(f"{ipaddress.IPv4Address(host_int)}/32")
-
+            continue
+ 
+        ipv4_addrs = []
+        ipv6_addrs = []
+ 
+        for ctrl in controllers.values():
+            # IPv4 /32 — sequential from .2
+            offset = ctrl["_next_peer"]
+            host_int = int(ctrl["v4_subnet"].network_address) + offset
+            ipv4_addrs.append(f"{ipaddress.IPv4Address(host_int)}/32")
+            ctrl["_next_peer"] += 1
+ 
             # IPv6 peer subnet
-            peer_net = ipv6_peer_subnet(ctrl["v6_subnet"], v6peer_len, peer["v6_peer_id"])
-            peer["ipv6"].append(str(peer_net))
-
+            ipv6_addrs.append(str(ipv6_peer_subnet(ctrl["v6_subnet"], v6peer_len, hostname)))
+ 
+        peers[hostname] = {"ipv4": ipv4_addrs, "ipv6": ipv6_addrs}
+ 
     # -----------------------------------------------------------------------
-    # Phase 3 - emit JSON, stripping any input ipv4/ipv6 fields
+    # Phase 3 — emit JSON
     # -----------------------------------------------------------------------
-    STRIP = {"ipv4", "ipv6"}
     network_out: dict = {}
-
-    for ctrl_name, ctrl in controllers.items():
-        entry = {k: v for k, v in data[ctrl_name].items() if k not in STRIP}
+ 
+    for name, ctrl in controllers.items():
+        entry = {k: v for k, v in data[name].items() if k not in STRIP}
         entry["ipv4"] = ctrl["ipv4"]
         entry["ipv6"] = ctrl["ipv6"]
-        network_out[ctrl_name] = entry
-
-    for peer_name, peer in peers.items():
-        entry = {k: v for k, v in data[peer_name].items() if k not in STRIP}
+        network_out[name] = entry
+ 
+    for name, peer in peers.items():
+        entry = {k: v for k, v in data[name].items() if k not in STRIP}
         entry["ipv4"] = peer["ipv4"]
         entry["ipv6"] = peer["ipv6"]
-        network_out[peer_name] = entry
-
+        network_out[name] = entry
+ 
+    tenant_count = 2 ** (args.tenant - root.prefixlen)
+    controllers_per_tenant = 2 ** (ctrl_len - args.tenant)
+ 
     print(json.dumps({
         "instanceName": args.instance_name,
         "ipv4": {
@@ -465,14 +331,14 @@ def main() -> None:
             "controllersPerTenant": controllers_per_tenant,
         },
         "ipv6": {
-            "base":               str(ipv6_base),
-            "instanceHashBits":   v6instance_bits,
+            "base":                str(ipv6_base),
+            "instanceHashBits":    v6instance_bits,
             "controllerPrefixLen": v6ctrl_len,
             "peerPrefixLen":       v6peer_len,
         },
         "network": network_out,
     }, indent=2))
-
-
+ 
+ 
 if __name__ == "__main__":
     main()

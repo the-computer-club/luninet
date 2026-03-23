@@ -82,13 +82,24 @@
           ${pkgs.python3}/bin/python ${./ip-allocate.py} $@
           '';
 
+        json = pkgs.writeText "current-inventory.json"
+          (builtins.toJSON luninet);
+        
         update-inventory = pkgs.writeShellScriptBin "update-inventory"
           ''
-          ${pkgs.lib.getExe ip-allocate} $@ luni ${
-            pkgs.writeText "current-inventory.json"
-              (builtins.toJSON luninet)
-          }
-          '';
+          ${pkgs.lib.getExe ip-allocate} \
+              --tenant 24 \
+              --controller 24 \
+              --root 172.29.80.0/24 \
+              --6peer 64 \
+              --6base 9 \
+              --6controller 48 \
+              --6instance-bits 1 luni ${
+                pkgs.writeText "current-inventory.json"
+                  (builtins.toJSON luninet)
+              }
+
+              '';
     });
   };
 }
