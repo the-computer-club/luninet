@@ -12,6 +12,7 @@ All connected peers share the `172.16.2.0/24` subnet. This is a **split-tunnel**
 |------|-------------|
 | [Joining the Network](./joining.md) | How to add yourself as a peer |
 | [Linux Setup](./linux.md) | `wg-quick` and manual setup for any Linux distro |
+| [Windows Setup](./Windows.md) | WireGuard, DNS proxy, and certificate setup on Windows |
 | [NixOS Setup](./nixos.md) | NixOS flake configurations (plain, flake-guard v1, flake-guard v2) |
 | [DNS Configuration](./dns.md) | Resolving `.luni` hostnames |
 | [Named Keys](./named-keys.md) | Showing peer names in `wg show` |
