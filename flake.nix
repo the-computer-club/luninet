@@ -118,8 +118,8 @@
             cp ${controller-names-json} $out/controller-names.json
             cp ${quick-peer-toml} $out/luni-peer.conf
             cp ${quick-controller-toml} $out/luni-controller.conf
-            cp ${mikrotik-controller-json} $out/luni-peers.json
-            cp ${mikrotik-peer-json} $out/luni-controllers.json
+            cp ${mikrotik-peer-json} $out/luni-peers.json
+            cp ${mikrotik-controller-json} $out/luni-controllers.json
           '';
         };
 
