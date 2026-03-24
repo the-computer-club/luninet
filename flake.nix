@@ -71,19 +71,59 @@
             ${body}
             ''
           );
+
+      mapMikrotik =
+        lib.mapAttrsToList (name: value: {
+          "public-key" = value.publicKey;
+          "allowed-address" = lib.concatStringsSep "," ((value.ipv4 or []) ++ (value.ipv6 or []));
+          "comment" = name;
+        }) luninet-full;
+
+    peerNames = lib.foldl' lib.recursiveUpdate { }
+      (lib.mapAttrsToList
+        (network-name: network:
+          lib.mapAttrs' (k: v: lib.nameValuePair (lib.trim v.publicKey) { name = k; })
+            network.peers.by-name
+        )
+        { luni.peers.by-name = luninet-full; }
+      );
+      
     in
       rec {
-        wg-quick-controller = peerToml "controller" false;
-        wg-quick = peerToml "peer" true;
-        default = wg-quick;
+        names-json = pkgs.writeText "luninet-names.json" (builtins.toJSON peerNames);
+        quick-peer-toml = peerToml "peer" true;
+        quick-controller-toml = peerToml "controller" false;
+        
+        mikrotik-controller-json = pkgs.writeText "controllercfg.json" (builtins.toJSON mapMikrotik) ;
+        mikrotik-peer-json = pkgs.writeText "peercfg.json" (builtins.toJSON mapMikrotik);
+        
+        mikrotik-convert = pkgs.writeShellScriptBin "mikrotik-convert"
+          ''
+          PATH=${pkgs.jq}/bin ${./mikrotik/convert.sh} $@
+          '';        
+
+        buildArtifacts = pkgs.stdenvNoCC.mkDerivation {
+          name = "build-artifacts";
+
+          dontUnpack = true;
+
+          buildPhase = ''
+            mkdir $out
+            cp ${names-json} $out/names.json
+            cp ${quick-peer-toml} $out/peer-luni.conf
+            cp ${quick-controller-toml} $out/controller-luni.conf
+            cp ${mikrotik-controller-json} $out/mikrotik-controllers.json
+            cp ${mikrotik-peer-json} $out/mikrotik-peer.json
+          '';
+        };
+
+        json = pkgs.writeText "current-inventory.json"
+          (builtins.toJSON luninet);
         
         ip-allocate = pkgs.writeShellScriptBin "ip-allocate"
           ''
           ${pkgs.python3}/bin/python ${./ip-allocate.py} $@
           '';
-
-        json = pkgs.writeText "current-inventory.json"
-          (builtins.toJSON luninet);
         
         update-inventory = pkgs.writeShellScriptBin "update-inventory"
           ''
