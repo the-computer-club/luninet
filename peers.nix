@@ -9,14 +9,13 @@
   gateway = {
     isController = true;
     publicKey = "GfzR2IYKx6IBXwGVNSTVnCRcQSr/Wm5dlPwXHO2xykI=";
-    # selfEndpoint = "198.12.96.43:24122";
+    selfEndpoint = "198.12.96.43:32288";
     ipv4 = ["172.29.80.0/24"];
     ipv6 = ["fd49:093b:2b68::/48"];
 
     # TODO: Add IPv4 port mapping.
     # portmap = [
-    #   { # create a port
-    #     # on 0.0.0.0:${dst-port} -> ${to-address}:${to-port}
+    #   { # create a port on (dst-port) -> ${to-address}:${to-port}
     #     dst-port = 25543;
     #     to-port = 25543;
     #     to-address = "10.0.0.1"; # or peers.${hostname}.ipv4
