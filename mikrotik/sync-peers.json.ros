@@ -1,0 +1,42 @@
+# read from an http endpoint peers.json
+# then update our wireguard interfaces
+
+/system/script add \
+    name="wg-peer-sync" \
+    policy=read,write,test \
+    source="
+:local url \"https://your-endpoint.example.com/peers.json\"
+:local interface \"wg0\"
+:local result [/tool/fetch url=\$url as-value output=user]
+:local body (\$result->\"data\")
+:local peers [:deserialize value=\$body from=json]
+:local desiredKeys [:toarray \"\"]
+:foreach peer in=\$peers do={
+    :set (\$desiredKeys->(\$peer->\"pubkey\")) true
+}
+:foreach p in=[/interface/wireguard/peers find interface=\$interface] do={
+    :local existingKey [/interface/wireguard/peers get \$p public-key]
+    :if (!\$desiredKeys->\$existingKey) do={
+        /interface/wireguard/peers remove \$p
+        :log info \"WG sync: removed peer \$existingKey\"
+    }
+}
+:foreach peer in=\$peers do={
+    :local pubkey (\$peer->\"pubkey\")
+    :local allowedips (\$peer->\"allowed-ips\")
+    :local endpoint (\$peer->\"endpoint\")
+    :local existing [/interface/wireguard/peers find public-key=\$pubkey interface=\$interface]
+    :if (\$existing = \"\") do={
+        /interface/wireguard/peers add interface=\$interface public-key=\$pubkey allowed-address=\$allowedips endpoint-address=[:pick \$endpoint 0 [:find \$endpoint \":\"]] endpoint-port=[:pick \$endpoint ([:find \$endpoint \":\"]+1) [:len \$endpoint]]
+        :log info \"WG sync: added peer \$pubkey\"
+    } else={
+        /interface/wireguard/peers set \$existing allowed-address=\$allowedips endpoint-address=[:pick \$endpoint 0 [:find \$endpoint \":\"]] endpoint-port=[:pick \$endpoint ([:find \$endpoint \":\"]+1) [:len \$endpoint]]
+    }
+}"
+
+/system/scheduler add \
+    name="wg-peer-sync" \
+    interval=5m \
+    start-time=startup \
+    on-event="/system/script run wg-peer-sync" \
+    policy=read,write,test

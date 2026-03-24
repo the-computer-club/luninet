@@ -10,14 +10,7 @@ To Join add yourself to the peer list inside `flake.nix`
 ``` nix
   # peers.nix
   {
-    your-hostname = {
-      publicKey = "..."; # wg genkey | tee private-key | wg pubkey
-      ipv4 = [
-        # use the next availabe ipv4 address
-        "172.25.209.8/32"
-        "172.25.208.8/32"
-      ]
-    };
+    your-hostname.publicKey = "..."; # wg genkey | tee private-key | wg pubkey
     ...
   };
 ```
@@ -26,42 +19,7 @@ To Join add yourself to the peer list inside `flake.nix`
 
 And you're done.
 
-## Allocated blocks
-IPv4 Root allocation: `172.25.208.0/20` (`172.25.223.254`)
-IPv6 Root allocation: `fd6e:bd00::/40`
-
-`172.25.208.0/24` [proxybox]
-`172.25.209.0/24` [cardinal]
-`fd6e:bd00:d4:5900::/56` [cardinal]
-
-## Available IPv4 blocks
-IPv4 Root allocation: `172.25.208.0/20` (`172.25.223.254`)
-
-13 blocks available:
-- `172.25.210.0/24`
-- `172.25.211.0/24`
-- `172.25.212.0/24`
-- `172.25.213.0/24`
-- `172.25.214.0/24`
-- `172.25.215.0/24`
-- `172.25.216.0/24`
-- `172.25.217.0/24`
-- `172.25.218.0/24`
-- `172.25.219.0/24`
-- `172.25.220.0/24`
-- `172.25.221.0/24`
-- `172.25.222.0/24`
-- `172.25.223.0/24`
-
-
-## Available IPv6 blocks
-`ula prefix`: `fde6:bd00::/40`
-
-65553 available blocks
-`fd6e:bd00:0000:00::/56`
-`...`
-`fd6e:bd00:00e2:1000::/56`
-`...`
+See [0001-luninet.md](./0001-luninet.md)
 
 
 ## FAQ
