@@ -1,6 +1,6 @@
 # Linux Setup
 
-This page covers WireGuard setup on standard Linux distributions using `wg-quick`, `systemd-networkd`, or manual `ip`/`wg` commands. For NixOS, see [NixOS Setup](./nixos.md).
+This page covers WireGuard setup on standard Linux distributions using `wg-quick`, `systemd-networkd`, or manual `ip`/`wg` commands. For NixOS, see [NixOS Setup](./docs/nixos.md).
 
 ---
 

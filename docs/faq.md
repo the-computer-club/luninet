@@ -78,4 +78,4 @@ A peer without `selfEndpoint` can still participate — but someone else needs t
 
 **Where do I get help?**
 
-Open an issue on the [automous-zones repository](https://github.com/the-computer-club/automous-zones) or ask in the club's usual channels.
+Open an issue on the [luninet repository](https://github.com/the-computer-club/luninet) or ask in the club's usual channels.

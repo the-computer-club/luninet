@@ -14,7 +14,9 @@ jobs:
         uses: actions/checkout@v4
  
       - name: Generate mikrotik-peers.json
-        run: ./mikrotik/convert.sh inventory.json > mikrotik-peers.json
+        run: |
+          chmod +x ./mikrotik/convert.sh
+          ./mikrotik/convert.sh inventory.json > mikrotik-peers.json
  
       - name: Upload artifact
         uses: actions/upload-artifact@v4

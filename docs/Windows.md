@@ -31,7 +31,7 @@ Run through the installer with default options. WireGuard will open automaticall
 
 1. In the WireGuard application, click **Add Tunnel → Add empty tunnel**
 2. Name it `asluni`
-3. You will see a pre-generated key pair — **copy your public key** and keep it for [joining the network](./joining.md)
+3. You will see a pre-generated key pair — **copy your public key** and keep it for [joining the network](./docs/joining.md)
 4. In the text editor, paste the contents of the latest peer list:
 
    **[wg-asluni.conf](https://github.com/the-computer-club/automous-zones/releases/download/latest/wg-asluni.conf)**
@@ -56,7 +56,7 @@ Open a command prompt (`cmd.exe` or PowerShell) and ping the DNS server:
 ping 172.29.80.2
 ```
 
-You should get replies. If not, check that the tunnel is active in the WireGuard UI and that your public key has been [added to the peer list](./joining.md).
+You should get replies. If not, check that the tunnel is active in the WireGuard UI and that your public key has been [added to the peer list](./docs/joining.md).
 
 ---
 
