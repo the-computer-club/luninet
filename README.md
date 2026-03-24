@@ -36,7 +36,7 @@ All connected peers share the `172.29.80.0/24` subnet. This is a **split-tunnel*
 If you just want to get connected as fast as possible on Linux:
 
 1. [Add yourself as a peer](./docs/joining.md)
-2. Download the latest config: [`wg-asluni.conf`](https://github.com/the-computer-club/automous-zones/releases/download/latest/wg-asluni.conf)
+2. Download the latest config: [`wg-asluni.conf`](https://github.com/the-computer-club/luninet/releases/download/latest/luni-peer.conf)
 3. Install WireGuard and bring up the interface:
 
 ```sh

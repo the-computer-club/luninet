@@ -53,32 +53,16 @@ Peers without a `selfEndpoint` will have no `endpoint` field. The sync script ha
 
 ---
 
-## Host the Peer Endpoint
+## Configuration for a Controller
 
-The router fetches peers from a URL you control. This can be any HTTPS server that serves the JSON file as a plain response.
-
-Simple options:
-
-- **GitHub Actions** — commit `peers.json` to a public repo and serve it via `raw.githubusercontent.com` or GitHub Pages
-- **A VPS** — run `nginx` or `caddy` serving the file statically, updated by a cron job that runs `convert.sh`
-- **An S3-compatible bucket** — upload the file on each inventory update
-
-The URL you use goes into the `$url` variable in the script below.
-
-> The file must be served over **HTTPS**. RouterOS will reject plain HTTP fetches by default.
-
----
-
-## Configure the Sync Script
-
-Paste the following into a RouterOS terminal. Update `url` and `interface` for your setup before running.
+Paste the following into a RouterOS terminal. Update `interface` for your setup before running.
 
 ```rsc
 /system/script add \
     name="wg-peer-sync" \
     policy=read,write,test \
     source="
-:local url \"https://your-endpoint.example.com/peers.json\"
+:local url \"https://github.com/the-computer-club/luninet/releases/download/latest/luni-controllers.json"
 :local interface \"wg0\"
 
 :local result [/tool/fetch url=\$url as-value output=user]
@@ -207,7 +191,7 @@ RouterOS needs to trust the CA that issued the certificate on your HTTPS endpoin
 
 **Script runs but no peers are added**
 
-Check that the JSON at your endpoint is valid and matches the expected format. You can test the fetch in isolation:
+  * [ ] Check that the JSON at your endpoint is valid and matches the expected format. You can test the fetch in isolation:
 
 ```rsc
 :put [/tool/fetch url="https://your-endpoint.example.com/peers.json" as-value output=user]
