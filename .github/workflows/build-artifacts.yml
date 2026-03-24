@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -20,8 +22,10 @@ jobs:
           result=$(nix build .#buildArtifacts --no-link --print-out-paths)
           echo "RESULT=$result" >> $GITHUB_ENV
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - name: Update latest release
+        uses: softprops/action-gh-release@v2
         with:
-          name: luninet-configs
-          path: ${{ env.RESULT }}/*
+          tag_name: latest
+          name: Latest
+          prerelease: true
+          files: ${{ env.RESULT }}/*
