@@ -1,0 +1,23 @@
+name: Generate MikroTik Peer List
+ 
+on:
+  push:
+    paths:
+      - inventory.json
+  workflow_dispatch:
+ 
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+ 
+      - name: Generate mikrotik-peers.json
+        run: ./mikrotik/convert.sh inventory.json > mikrotik-peers.json
+ 
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mikrotik-peers
+          path: mikrotik-peers.json
