@@ -1,7 +1,7 @@
 {
   gateway = {
     isController = true;
-    publicKey = "GfzR2IYKx6IBXwGVNSTVnCRcQSr/Wm5dlPwXHO2xykI=";
+    publicKey = "KdO2Js/JUOq1Yv6fzN64P3LLrfkKMqUNxeE5R1JJTHU=";
     selfEndpoint = "198.12.96.43:32288";
     ipv4 = ["172.29.80.0/24"];
     ipv6 = ["fd49:093b:2b68::/48"];
