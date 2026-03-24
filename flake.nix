@@ -88,7 +88,7 @@
           {
             "public-key" = p.publicKey or "";
             "allowed-address" = lib.concatStringsSep "," ((p.ipv4 or []) ++ (p.ipv6 or []));
-            "comment" = p.hostname;
+            "name" = p.hostname;
             "persistent-keepalive" = p.persistentKeepalive or 0;
             "endpoint-address" = host;
             "endpoint-port" = port;
