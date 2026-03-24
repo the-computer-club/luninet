@@ -34,7 +34,7 @@
       pkgs = import nixpkgs { inherit system; };
       lib = pkgs.lib;
 
-      peerToml = name: controllersOnly:
+      peerToml = filename: controllersOnly:
         let
           header = ''
             [Interface]
@@ -65,43 +65,48 @@
             (lib.concatStringsSep "\n")
           ]);
         in
-          (pkgs.writeText "luni-${name}.conf"
+          (pkgs.writeText "luni-${filename}.conf"
             ''
             ${header}
             ${body}
             ''
           );
 
-      mapMikrotik =
-        lib.mapAttrsToList (name: value: {
-          "public-key" = value.publicKey;
-          "allowed-address" = lib.concatStringsSep "," ((value.ipv4 or []) ++ (value.ipv6 or []));
-          "comment" = name;
-        }) luninet-full;
+      mapMikrotik = controllersOnly:
+        let
+          isController = p: p ? isController && p.isController;
+          peers = lib.mapAttrsToList (k: v: v // { hostname = k; }) luninet-full;
+          filtered = if controllersOnly then lib.filter isController peers else peers;
+        in
+          map (p: {
+            "public-key" = p.publicKey or "";
+            "allowed-address" = lib.concatStringsSep "," ((p.ipv4 or []) ++ (p.ipv6 or []));
+            "comment" = p.hostname;
+          }) filtered;
 
-    peerNames = lib.foldl' lib.recursiveUpdate { }
-      (lib.mapAttrsToList
-        (network-name: network:
-          lib.mapAttrs' (k: v: lib.nameValuePair (lib.trim v.publicKey) { name = k; })
-            network.peers.by-name
-        )
-        { luni.peers.by-name = luninet-full; }
-      );
-      
+     peerNames = controllersOnly:
+        let
+          isController = p: p ? isController && p.isController;
+          peers = if controllersOnly then lib.filterAttrs (_: isController) luninet-full else luninet-full;
+        in
+          lib.foldl' lib.recursiveUpdate { }
+            (lib.mapAttrsToList
+              (network-name: network:
+                lib.mapAttrs' (k: v: lib.nameValuePair (lib.trim v.publicKey) { name = k; })
+                  network.peers.by-name
+              )
+              { luni.peers.by-name = peers; }
+            );
     in
       rec {
-        names-json = pkgs.writeText "luninet-names.json" (builtins.toJSON peerNames);
+        peer-names-json = pkgs.writeText "luninet-names.json" (builtins.toJSON (peerNames true));
+        controller-names-json = pkgs.writeText "luninet-names.json" (builtins.toJSON (peerNames false));
         quick-peer-toml = peerToml "peer" true;
         quick-controller-toml = peerToml "controller" false;
         
-        mikrotik-controller-json = pkgs.writeText "controllercfg.json" (builtins.toJSON mapMikrotik) ;
-        mikrotik-peer-json = pkgs.writeText "peercfg.json" (builtins.toJSON mapMikrotik);
+        mikrotik-controller-json = pkgs.writeText "controller.json" (builtins.toJSON (mapMikrotik false));
+        mikrotik-peer-json = pkgs.writeText "peercfg.json" (builtins.toJSON (mapMikrotik true));
         
-        mikrotik-convert = pkgs.writeShellScriptBin "mikrotik-convert"
-          ''
-          PATH=${pkgs.jq}/bin ${./mikrotik/convert.sh} $@
-          '';        
-
         buildArtifacts = pkgs.stdenvNoCC.mkDerivation {
           name = "build-artifacts";
 
@@ -109,14 +114,20 @@
 
           buildPhase = ''
             mkdir $out
-            cp ${names-json} $out/names.json
-            cp ${quick-peer-toml} $out/peer-luni.conf
-            cp ${quick-controller-toml} $out/controller-luni.conf
-            cp ${mikrotik-controller-json} $out/mikrotik-controllers.json
-            cp ${mikrotik-peer-json} $out/mikrotik-peer.json
+            cp ${peer-names-json} $out/peer-names.json
+            cp ${controller-names-json} $out/controller-names.json
+            cp ${quick-peer-toml} $out/luni-peer.conf
+            cp ${quick-controller-toml} $out/luni-controller.conf
+            cp ${mikrotik-controller-json} $out/luni-peers.json
+            cp ${mikrotik-peer-json} $out/luni-controllers.json
           '';
         };
 
+        mikrotik-convert = pkgs.writeShellScriptBin "mikrotik-convert"
+          ''
+          PATH=${pkgs.jq}/bin ${./mikrotik/convert.sh} $@
+          '';        
+        
         json = pkgs.writeText "current-inventory.json"
           (builtins.toJSON luninet);
         
@@ -138,8 +149,7 @@
                 pkgs.writeText "current-inventory.json"
                   (builtins.toJSON luninet)
               }
-
-              '';
+          '';
     });
   };
 }
