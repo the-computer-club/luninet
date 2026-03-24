@@ -2,7 +2,7 @@
 
 **luninet** is a WireGuard VPN that underpins the computer-club's shared infrastructure. It provides a tunneling layer for gaming, file sharing, and self-hosted services across club members' machines.
 
-All connected peers share the `172.16.2.0/24` subnet. This is a **split-tunnel** VPN — only traffic addressed to that subnet is encapsulated. Your normal internet traffic is unaffected.
+All connected peers share the `172.29.80.0/24` subnet. This is a **split-tunnel** VPN — only traffic addressed to that subnet is encapsulated. Your normal internet traffic is unaffected.
 
 ---
 
@@ -23,9 +23,9 @@ All connected peers share the `172.16.2.0/24` subnet. This is a **split-tunnel**
 
 ## Network at a Glance
 
-- **Subnet:** `172.16.2.0/24`
-- **Routable range:** `172.16.2.1` – `172.16.2.254`
-- **DNS server:** `172.16.2.2` / `172.16.2.6`
+- **Subnet:** `172.29.80.0/24`
+- **Routable range:** `172.29.80.1` – `172.29.80.254`
+- **DNS server:** `172.29.80.2` / `172.29.80.6`
 - **VPN type:** Split-tunnel (only VPN-addressed traffic is encapsulated)
 - **Underlying protocol:** WireGuard
 
