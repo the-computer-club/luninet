@@ -1,6 +1,6 @@
-# automous-zones
+# luninet
 
-**automous-zones** is a WireGuard mesh VPN that underpins the computer-club's shared infrastructure. It provides a tunneling layer for gaming, file sharing, and self-hosted services across club members' machines.
+**luninet** is a WireGuard VPN that underpins the computer-club's shared infrastructure. It provides a tunneling layer for gaming, file sharing, and self-hosted services across club members' machines.
 
 All connected peers share the `172.16.2.0/24` subnet. This is a **split-tunnel** VPN — only traffic addressed to that subnet is encapsulated. Your normal internet traffic is unaffected.
 
@@ -14,6 +14,7 @@ All connected peers share the `172.16.2.0/24` subnet. This is a **split-tunnel**
 | [Linux Setup](./docs/linux.md) | `wg-quick` and manual setup for any Linux distro |
 | [Windows Setup](./docs/Windows.md) | WireGuard, DNS proxy, and certificate setup on Windows |
 | [NixOS Setup](./docs/nixos.md) | NixOS flake configurations (plain, flake-guard v1, flake-guard v2) |
+| [Mikrotik Setup](./docs/mikrotik.md) | Configuring mikrotik to work with luninet |
 | [DNS Configuration](./docs/dns.md) | Resolving `.luni` hostnames |
 | [Named Keys](./docs/named-keys.md) | Showing peer names in `wg show` |
 | [FAQ](./docs/faq.md) | Common questions |

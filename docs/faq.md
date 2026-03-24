@@ -4,7 +4,7 @@
 
 **What can I access on the network?**
 
-Any peer that has a `selfEndpoint` defined in `peers.nix` is reachable at any time. Peers without a `selfEndpoint` are only reachable when they've initiated a connection themselves (WireGuard establishes a path dynamically). All addresses in `172.16.2.1`–`172.16.2.254` are routed over the VPN.
+Any peer that has a `selfEndpoint` defined in `peers.nix` is reachable at any time. Peers without a `selfEndpoint` are only reachable when they've initiated a connection themselves (WireGuard establishes a path dynamically). All addresses in `172.29.80.1`–`172.29.80.254` are routed over the VPN.
 
 ---
 
@@ -29,7 +29,7 @@ sudo wg-quick down asluni
 
 **Does this hide my internet traffic like a commercial VPN?**
 
-No. This is a split-tunnel VPN. Only packets addressed to `172.16.2.0/24` are encapsulated and routed through the VPN. All other traffic (web browsing, etc.) goes through your normal connection unchanged.
+No. This is a split-tunnel VPN. Only packets addressed to `172.29.80.0/24` are encapsulated and routed through the VPN. All other traffic (web browsing, etc.) goes through your normal connection unchanged.
 
 ---
 

@@ -39,12 +39,12 @@ Output format:
 [
   {
     "pubkey": "base64pubkey==",
-    "allowed-ips": "172.16.2.2/32",
+    "allowed-ips": "172.29.80.2/32",
     "endpoint": "1.2.3.4:51820"
   },
   {
     "pubkey": "anotherkey==",
-    "allowed-ips": "172.16.2.3/32"
+    "allowed-ips": "172.29.80.3/32"
   }
 ]
 ```
@@ -192,7 +192,7 @@ Peers should now match the current contents of `peers.json`.
 ### Test connectivity
 
 ```rsc
-/tool/ping 172.16.2.1
+/tool/ping 172.29.80.1
 ```
 
 If you get replies, the tunnel and peer configuration are working correctly.

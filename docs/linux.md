@@ -54,7 +54,7 @@ Create `/etc/wireguard/asluni.conf`:
 ```ini
 [Interface]
 PrivateKey = <contents of /etc/wireguard/asluni.key>
-Address = 172.16.2.X/24   # your assigned IP from peers.nix
+Address = 172.29.80.X/24   # your assigned IP from peers.nix
 ListenPort = 51820         # optional, needed if you have a selfEndpoint
 
 # --- Peer list follows (append contents of wg-asluni.conf below) ---
@@ -124,7 +124,7 @@ ListenPort = 51820
 # Repeat [WireGuardPeer] sections for each peer
 [WireGuardPeer]
 PublicKey = <peer public key>
-AllowedIPs = 172.16.2.X/32
+AllowedIPs = 172.29.80.X/32
 Endpoint = <peer endpoint if known>   # optional
 PersistentKeepalive = 25              # optional, helps with NAT
 ```
@@ -136,7 +136,7 @@ PersistentKeepalive = 25              # optional, helps with NAT
 Name = asluni
 
 [Network]
-Address = 172.16.2.X/24
+Address = 172.29.80.X/24
 ```
 
 ### Apply
@@ -160,11 +160,11 @@ sudo ip link add dev asluni type wireguard
 sudo wg set asluni private-key /etc/wireguard/asluni.key
 
 # Assign your IP
-sudo ip address add 172.16.2.X/24 dev asluni
+sudo ip address add 172.29.80.X/24 dev asluni
 
 # Add peers
 sudo wg set asluni peer <PUBLIC_KEY> \
-  allowed-ips 172.16.2.Y/32 \
+  allowed-ips 172.29.80.Y/32 \
   endpoint <IP:PORT>           # optional
 
 # Bring the interface up
@@ -207,7 +207,7 @@ sudo wg show
 ip addr show asluni
 
 # Ping another peer
-ping 172.16.2.1
+ping 172.29.80.1
 
 # Check routing
 ip route show dev asluni

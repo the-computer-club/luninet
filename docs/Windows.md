@@ -41,7 +41,7 @@ Run through the installer with default options. WireGuard will open automaticall
 ```ini
 [Interface]
 PrivateKey = <your private key shown in the dialog>
-Address = 172.16.2.X/24   # your assigned IP from peers.nix
+Address = 172.29.80.X/24   # your assigned IP from peers.nix
 ```
 
 6. Click **Save**, then click **Activate**
@@ -53,7 +53,7 @@ Address = 172.16.2.X/24   # your assigned IP from peers.nix
 Open a command prompt (`cmd.exe` or PowerShell) and ping the DNS server:
 
 ```
-ping 172.16.2.2
+ping 172.29.80.2
 ```
 
 You should get replies. If not, check that the tunnel is active in the WireGuard UI and that your public key has been [added to the peer list](./joining.md).
@@ -95,8 +95,8 @@ Save the file and rename it to `dnscrypt-proxy.toml`.
 Rename `example-forwarding-rules.txt` to `forwarding-rules.txt`, then add the following two lines:
 
 ```
-luni      172.16.2.2:5334
-luni.b32  172.16.2.2:5333
+luni      172.29.80.2:5334
+luni.b32  172.29.80.2:5333
 ```
 
 ### 5c. Install and start the service
@@ -209,7 +209,7 @@ If you get a valid response, everything is working. If you get a certificate err
 
 ## Troubleshooting
 
-**`ping 172.16.2.2` times out**
+**`ping 172.29.80.2` times out**
 The tunnel may not be active. Open WireGuard and check that the `asluni` tunnel shows as connected. Also verify that your public key was added to `peers.nix` and the PR was merged.
 
 **`nslookup unallocatedspace.luni` fails but `nslookup google.com` works**
