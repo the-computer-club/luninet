@@ -40,7 +40,8 @@ Output format:
   {
     "pubkey": "base64pubkey==",
     "allowed-ips": "172.29.80.2/32",
-    "endpoint": "1.2.3.4:51820"
+    "endpoint-address": "1.2.3.4",
+    "endpoint-port": 51820
   },
   {
     "pubkey": "anotherkey==",
