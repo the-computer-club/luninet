@@ -78,11 +78,21 @@
           peers = lib.mapAttrsToList (k: v: v // { hostname = k; }) luninet-full;
           filtered = if controllersOnly then lib.filter isController peers else peers;
         in
-          map (p: ({
+          map (p:
+            let
+              parts = if p?selfEndpoint then lib.splitString ":" p.selfEndpoint else [];
+              host = if parts != [] then builtins.head parts else "";
+              port = if parts != [] then builtins.elemAt parts 1 else 0;
+              
+            in
+          {
             "public-key" = p.publicKey or "";
             "allowed-address" = lib.concatStringsSep "," ((p.ipv4 or []) ++ (p.ipv6 or []));
-            "name" = p.hostname;
-          } // (lib.optionalAttrs (p?selfEndpoint) { endpoint = p.selfEndpoint; }))) filtered;
+            "comment" = p.hostname;
+            "persistent-keepalive" = p.persistentKeepalive or 0;
+            "endpoint-address" = host;
+            "endpoint-port" = port;
+          }) filtered;
 
      peerNames = controllersOnly:
         let
@@ -116,7 +126,7 @@
             mkdir $out
             cp ${peer-names-json} $out/peer-names.json
             cp ${controller-names-json} $out/controller-names.json
-            cp ${quick-peer-toml} $out/wgluni-peer.conf
+            cp ${quick-peer-toml} $out/luni-peer.conf
             cp ${quick-controller-toml} $out/luni-controller.conf
             cp ${mikrotik-peer-json} $out/luni-peers.json
             cp ${mikrotik-controller-json} $out/luni-controllers.json

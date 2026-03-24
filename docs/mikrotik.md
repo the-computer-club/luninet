@@ -59,11 +59,11 @@ Paste the following into a RouterOS terminal. Update `interface` for your setup 
 
 ```rsc
 /system/script add \
-    name="wg-peer-sync" \
+    name="luninet-sync" \
     policy=read,write,test \
     source="
-:local url \"https://github.com/the-computer-club/luninet/releases/download/latest/luni-controllers.json"
-:local interface \"wg0\"
+:local url \"https://github.com/the-computer-club/luninet/releases/download/latest/luni-controllers.json\"
+:local interface \"luninet-clients\"
 
 :local result [/tool/fetch url=\$url as-value output=user]
 :local body (\$result->\"data\")
@@ -72,7 +72,7 @@ Paste the following into a RouterOS terminal. Update `interface` for your setup 
 # Build a set of desired public keys from the fetched peer list
 :local desiredKeys [:toarray \"\"]
 :foreach peer in=\$peers do={
-    :set (\$desiredKeys->(\$peer->\"pubkey\")) true
+    :set (\$desiredKeys->(\$peer->\"public-key\")) true
 }
 
 # Remove any peers on the interface that are no longer in the list
@@ -86,20 +86,20 @@ Paste the following into a RouterOS terminal. Update `interface` for your setup 
 
 # Add new peers and update existing ones
 :foreach peer in=\$peers do={
-    :local pubkey (\$peer->\"pubkey\")
-    :local allowedips (\$peer->\"allowed-ips\")
-    :local endpoint (\$peer->\"endpoint\")
+    :local pubkey (\$peer->\"public-key\")
+    :local allowedips (\$peer->\"allowed-address\")
+    :local endpointAddr (\$peer->\"endpoint-address\")
+    :local endpointPort (\$peer->\"endpoint-port\")
     :local existing [/interface/wireguard/peers find public-key=\$pubkey interface=\$interface]
 
-    :if (\$existing = \"\") do={
-        # Peer doesn't exist yet — add it
-        :if (\$endpoint != \"\") do={
+    :if ([:len \$existing] = 0) do={
+        :if (\$endpointAddr != \"\") do={
             /interface/wireguard/peers add \
                 interface=\$interface \
                 public-key=\$pubkey \
                 allowed-address=\$allowedips \
-                endpoint-address=[:pick \$endpoint 0 [:find \$endpoint \":\"]] \
-                endpoint-port=[:pick \$endpoint ([:find \$endpoint \":\"]+1) [:len \$endpoint]]
+                endpoint-address=\$endpointAddr \
+                endpoint-port=\$endpointPort
         } else={
             /interface/wireguard/peers add \
                 interface=\$interface \
@@ -108,18 +108,19 @@ Paste the following into a RouterOS terminal. Update `interface` for your setup 
         }
         :log info \"WG sync: added peer \$pubkey\"
     } else={
-        # Peer exists — update its allowed address and endpoint if present
-        :if (\$endpoint != \"\") do={
+        :if (\$endpointAddr != \"\") do={
             /interface/wireguard/peers set \$existing \
                 allowed-address=\$allowedips \
-                endpoint-address=[:pick \$endpoint 0 [:find \$endpoint \":\"]] \
-                endpoint-port=[:pick \$endpoint ([:find \$endpoint \":\"]+1) [:len \$endpoint]]
+                endpoint-address=\$endpointAddr \
+                endpoint-port=\$endpointPort
         } else={
             /interface/wireguard/peers set \$existing \
                 allowed-address=\$allowedips
         }
+        :log info \"WG sync: updated peer \$pubkey\"
     }
-}"
+}
+"
 ```
 
 ### What the script does
