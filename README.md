@@ -19,7 +19,7 @@ To Join add yourself to the peer list inside `flake.nix`
 
 And you're done.
 
-See [0001-luninet.md](./0001-luninet.md)
+See [0001-luninet.md](https://github.com/the-computer-club/RFC/blob/main/0001-luninet.md)
 
 
 ## FAQ
