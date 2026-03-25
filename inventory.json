@@ -24,10 +24,55 @@
         "fd49:93b:2b68::/48"
       ]
     },
+    "comet": {
+      "publicKey": "w90lfP16gY5debtjkfKVyKdL8mtlEXUmciNRTyTi7jw=",
+      "ipv4": [
+        "172.29.80.2/32"
+      ],
+      "ipv6": [
+        "fd49:93b:2b68:d51f::/64"
+      ]
+    },
+    "fluorine": {
+      "publicKey": "fCw+r4TKsxh36CdDSc6BTf0an9F2O8KQ189dYukpFHs=",
+      "ipv4": [
+        "172.29.80.3/32"
+      ],
+      "ipv6": [
+        "fd49:93b:2b68:7226::/64"
+      ]
+    },
+    "frogson": {
+      "publicKey": "5j44nM6qmbJ2S8B24aA/H6UEPVXJFfxf8sTacMktMis=",
+      "ipv4": [
+        "172.29.80.4/32"
+      ],
+      "ipv6": [
+        "fd49:93b:2b68:5017::/64"
+      ]
+    },
+    "hexi": {
+      "publicKey": "UHmZ/pzB5cUFGEm9708pdG42vYVO+IkqtzeNaBAseWg=",
+      "ipv4": [
+        "172.29.80.5/32"
+      ],
+      "ipv6": [
+        "fd49:93b:2b68:5cda::/64"
+      ]
+    },
+    "hypothalamus": {
+      "publicKey": "9yzjykzsSnDxXA15sRf+PW/V3HFMxA3ZWTwngOWlUHk=",
+      "ipv4": [
+        "172.29.80.6/32"
+      ],
+      "ipv6": [
+        "fd49:93b:2b68:8ed0::/64"
+      ]
+    },
     "mesalon": {
       "publicKey": "NBXhSrqgTN2LDfJ6MhqVwWFfxyBaqBjR5fYfLjb+gg8=",
       "ipv4": [
-        "172.29.80.2/32"
+        "172.29.80.7/32"
       ],
       "ipv6": [
         "fd49:93b:2b68:72d1::/64"
@@ -36,10 +81,37 @@
     "mesalon-vps": {
       "publicKey": "/6egVjOjIIgxEzBAW+SWjSTmauxA5spi8cVAaQUX5GY=",
       "ipv4": [
-        "172.29.80.3/32"
+        "172.29.80.8/32"
       ],
       "ipv6": [
         "fd49:93b:2b68:a94f::/64"
+      ]
+    },
+    "ov13": {
+      "publicKey": "S6yiCMatKlVX0WxyaWXTizasZPfQQ9oGM2pv82CtrgM=",
+      "ipv4": [
+        "172.29.80.9/32"
+      ],
+      "ipv6": [
+        "fd49:93b:2b68:70b2::/64"
+      ]
+    },
+    "simcra": {
+      "publicKey": "pq529jYwkJZZzdWB2fJ08A+41prV5gVsg3iE/kVN0GQ=",
+      "ipv4": [
+        "172.29.80.10/32"
+      ],
+      "ipv6": [
+        "fd49:93b:2b68:810e::/64"
+      ]
+    },
+    "tangobee": {
+      "publicKey": "5kGzZgx1QMLvdm7OsZoMzG7NC/4Pf3/S2MKFAvcR5wU=",
+      "ipv4": [
+        "172.29.80.11/32"
+      ],
+      "ipv6": [
+        "fd49:93b:2b68:2383::/64"
       ]
     }
   }
