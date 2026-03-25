@@ -59,78 +59,82 @@ Peers without a `selfEndpoint` will have no `endpoint` field. The sync script ha
 Paste the following into a RouterOS terminal. Update `interface` for your setup before running.
 
 ```rsc
+
 /system/script add \
     name="luninet-sync" \
     policy=read,write,test \
     source="
 :local url \"https://github.com/the-computer-club/luninet/releases/download/latest/luni-controllers.json\"
-:local interface \"wg0\"
-:local ownKey [/interface/wireguard get \$interface public-key]
+:local interface \"luninet-clients\"
+:local ownkey [/interface/wireguard get \$interface public-key]
 
 :local result [/tool/fetch url=\$url as-value output=user]
 :local body (\$result->\"data\")
 :local peers [:deserialize value=\$body from=json]
 
-# Build a set of desired public keys
-:local desiredKeys [:toarray \"\"]
+# build a set of desired public keys
+:local desiredkeys [:toarray \"\"]
 :foreach peer in=\$peers do={
     :local pubkey (\$peer->\"public-key\")
-    :if (\$pubkey != \$ownKey) do={
-        :set (\$desiredKeys->\$pubkey) true
+    :if (\$pubkey != \$ownkey) do={
+        :set (\$desiredkeys->\$pubkey) true
     }
 }
 
-# Remove peers no longer in the list
+# remove peers no longer in the list
 :foreach p in=[/interface/wireguard/peers find interface=\$interface] do={
-    :local existingKey [/interface/wireguard/peers get \$p public-key]
-    :if ([:typeof (\$desiredKeys->\$existingKey)] = \"nothing\") do={
-        /interface/wireguard/peers remove \$p
-        :log info \"WG sync: removed peer \$existingKey\"
+    :local existingkey [/interface/wireguard/peers get \$p public-key]
+    :local existingiface [/interface/wireguard/peers get \$p interface]
+    :if (\$existingiface = \$interface) do={
+        :if ([:typeof (\$desiredkeys->\$existingkey)] = \"nil\") do={
+            /interface/wireguard/peers remove \$p
+            :log info \"wg sync: removed peer \$existingkey\"
+        }
     }
 }
 
-# Add or update peers
+# add or update peers
 :foreach peer in=\$peers do={
     :local pubkey (\$peer->\"public-key\")
-    :if (\$pubkey = \$ownKey) do={
-        :log info \"WG sync: skipping own key\"
+    :if (\$pubkey = \$ownkey) do={
+        :log info \"wg sync: skipping own key\"
     } else={
-        :local peerName (\$peer->\"name\")
+        :local peername (\$peer->\"name\")
         :local allowedips (\$peer->\"allowed-address\")
-        :local endpointAddr (\$peer->\"endpoint-address\")
-        :local endpointPort (\$peer->\"endpoint-port\")
+        :local endpointaddr (\$peer->\"endpoint-address\")
+        :local endpointport (\$peer->\"endpoint-port\")
         :local existing [/interface/wireguard/peers find public-key=\$pubkey interface=\$interface]
 
         :if ([:len \$existing] = 0) do={
-            :if (\$endpointAddr != \"\") do={
+            :if (\$endpointaddr != \"\") do={
                 /interface/wireguard/peers add \
                     interface=\$interface \
                     public-key=\$pubkey \
                     allowed-address=\$allowedips \
-                    endpoint-address=\$endpointAddr \
-                    endpoint-port=\$endpointPort \
-                    name=\$peerName
+                    endpoint-address=\$endpointaddr \
+                    endpoint-port=\$endpointport \
+                    name=\$peername
             } else={
                 /interface/wireguard/peers add \
                     interface=\$interface \
                     public-key=\$pubkey \
                     allowed-address=\$allowedips \
-                    name=\$peerName
+                    name=\$peername
             }
-            :log info \"WG sync: added peer \$peerName\"
+            :log info \"wg sync: added peer \$peername\"
         } else={
-            :if (\$endpointAddr != \"\") do={
+            :if (\$endpointaddr != \"\") do={
                 /interface/wireguard/peers set \$existing \
                     allowed-address=\$allowedips \
-                    endpoint-address=\$endpointAddr \
-                    endpoint-port=\$endpointPort \
-                    name=\$peerName
+                    endpoint-address=\$endpointaddr \
+                    endpoint-port=\$endpointport \
+                    name=\$peername
             } else={
                 /interface/wireguard/peers set \$existing \
                     allowed-address=\$allowedips \
-                    name=\$peerName
+                    name=\$peername
             }
-            :log info \"WG sync: updated peer \$peerName\"
+            :log info \"wg sync: updated peer \$peername\"
         }
     }
 }
