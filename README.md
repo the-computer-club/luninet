@@ -50,30 +50,4 @@ For full setup instructions, see [Linux Setup](./docs/linux.md).
 
 ---
 
-## Generating `inventory.json` Without Nix
-
-Normally, `inventory.json` is generated using the nix command:
-
-```sh
-nix run .#update-inventory > inventory.json
-```
-
-If you don't have nix installed, you can generate `inventory.json` directly using the Python script:
-
-```sh
-python3 ip-allocate.py \
-    --tenant 23 \
-    --controller 24 \
-    --root 172.29.80.0/23 \
-    --6peer 64 \
-    --6base 9 \
-    --6controller 48 \
-    --6instance-bits 1 \
-    luni peers.nix > inventory.json
-```
-
-This requires Python 3 to be installed on your system.
-
----
-
 See also: [RFC 0001 — luninet](https://github.com/the-computer-club/RFC/blob/main/0001-luninet.md)
