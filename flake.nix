@@ -32,12 +32,15 @@
           map (x: (builtins.head (builtins.split "/" x))) p.ipv6
         else
           [];
-     };
+    };
+
+    subdomains = peer: nixpkgs.lib.foldl' (s: x: { ${x} = peerRecord peer; } // s) {};
+    
   in
   {
     lib = {
       toPeer = toPeers;
-      inherit toPeers toNonFlakeParts peerRecord;
+      inherit toPeers toNonFlakeParts peerRecord subdomains;
     };
 
     flakeModules.asluni = luninetModule;
@@ -55,9 +58,11 @@
         };
         # inherit NS SOA;
         subdomains =
-          nixpkgs.lib.mapAttrs
+          (nixpkgs.lib.mapAttrs
             (k: p: (peerRecord p))
-            luninet-full;
+            luninet-full)
+          //
+          (subdomains { ipv4 = ["172.29.83.1"]; } ["codex" "airsonic" "tape"] );
       };
     };
 
