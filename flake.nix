@@ -12,22 +12,54 @@
     };
 
     luninet = import ./peers.nix;
-
+    
     luninet-full =
       nixpkgs.lib.recursiveUpdate
         luninet
         (builtins.fromJSON (builtins.readFile ./inventory.json)).network;
 
     luninetModule.wireguard.networks.luni.peers.by-name = luninet-full;
+
+    peerRecord = p: {
+      A =
+          if p ? ipv4
+          then map (x: (builtins.head (builtins.split "/" x))) p.ipv4
+          else [];
+      AAAA =
+        if
+          p ? ipv6
+        then
+          map (x: (builtins.head (builtins.split "/" x))) p.ipv6
+        else
+          [];
+     };
   in
   {
     lib = {
       toPeer = toPeers;
-      inherit toPeers toNonFlakeParts;
+      inherit toPeers toNonFlakeParts peerRecord;
     };
 
     flakeModules.asluni = luninetModule;
     nixosModules.asluni = luninetModule;
+    
+    peers = luninet-full;
+    
+    zones = {  
+      "unallocatedspace.luni" = {
+        NS = ["unallocatedspace.luni."];
+        SOA = {
+          nameServer = "unallocatedspace.luni.";
+          adminEmail = "contact@unallocatedspace.luni";
+          serial = 2025072000; # 2025-07-20-00
+        };
+        # inherit NS SOA;
+        subdomains =
+          nixpkgs.lib.mapAttrs
+            (k: p: (peerRecord p))
+            luninet-full;
+      };
+    };
 
     packages = nixpkgs.lib.genAttrs ["x86_64-linux"] (system:
     let
