@@ -45,15 +45,7 @@
 
     flakeModules.asluni = luninetModule;
     nixosModules.asluni = luninetModule;
-    nixosModules.aslunip2p.wireguard.networks.aslunip2p.peers.by-name = {
-      registry = {
-        ipv4 = ["172.29.4.1/32"];
-        publicKey = "Mgb712CcRZfJgT6eGj2AUrZswtZlyU9wyx9OwMtCRys=";
-        
-      };
-    };
-
-    
+    nixosModules.aslunip2p = import ./p2pnet.nix   
     zones = {  
       "unallocatedspace.luni" = {
         NS = ["unallocatedspace.luni."];
