@@ -45,7 +45,7 @@
 
     flakeModules.asluni = luninetModule;
     nixosModules.asluni = luninetModule;
-    nixosModules.aslunip2p = import ./p2pnet.nix   
+    nixosModules.aslunip2p = import ./p2pnet.nix;   
     zones = {  
       "unallocatedspace.luni" = {
         NS = ["unallocatedspace.luni."];

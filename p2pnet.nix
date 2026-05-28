@@ -55,6 +55,17 @@ in
   };
   
   config = lib.mkIf cfg.enable {
+
+    systemd.timers.luninetp2p-discovery = {
+      timerConfig = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = timer snapName;
+          Persistent = "yes";
+        };
+      };
+    };
+    
     systemd.services = {
       luninetp2p-discovery = {
         description = "Luninet discovery server service";
@@ -68,12 +79,14 @@ in
           Group = "root";
           
           Directory = cfg.homeDir;
-          ExecStart = lib.concatStringsSep " " [
-            "${cfg.package}/bin/wgsd-client -device=aslunip2p -dns=172.29.83.1:5353 -zone=unallocatedspace.luni"
-          ];
+          ExecStart = 
+            "${cfg.package}/bin/wgsd-client -device=aslunip2p -dns=172.29.84.1:5353 -zone=unallocatedspace.luni";
 
-          CapabilityBoundingSet = lib.mkForce "cap_net_bind_service cap_net_admin";
-          AmbientCapabilities = lib.mkForce "cap_net_bind_service cap_net_admin";
+          CapabilityBoundingSet =
+            lib.mkForce "cap_net_bind_service cap_net_admin";
+
+          AmbientCapabilities =
+            lib.mkForce "cap_net_bind_service cap_net_admin";
         };
       };
     };
