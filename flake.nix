@@ -60,7 +60,14 @@
             (k: p: (peerRecord p))
             luninet-full)
           //
-          (subdomains { ipv4 = ["172.29.83.1"]; } ["codex" "airsonic" "tape"] );
+          (subdomains { ipv4 = ["172.29.83.1"]; } [
+            "airsonic"
+            "buildbot"
+            "codex"
+            "tape"
+            "ca"
+            "lowendtalk"
+          ]);
       };
     };
 
@@ -74,7 +81,7 @@
           header = ''
             [Interface]
             Name = luni
-            DNS = 172.25.112.1
+            DNS = 172.29.3.1
             PrivateKey = 0000000000000000000000000
           '';
 
@@ -130,18 +137,18 @@
           }) filtered;
 
      peerNames = controllersOnly:
-        let
-          isController = p: p ? isController && p.isController;
-          peers = if controllersOnly then lib.filterAttrs (_: isController) luninet-full else luninet-full;
-        in
-          lib.foldl' lib.recursiveUpdate { }
-            (lib.mapAttrsToList
-              (network-name: network:
-                lib.mapAttrs' (k: v: lib.nameValuePair (lib.trim v.publicKey) { name = k; })
-                  network.peers.by-name
-              )
-              { luni.peers.by-name = peers; }
-            );
+       let
+         isController = p: p ? isController && p.isController;
+         peers = if controllersOnly then lib.filterAttrs (_: isController) luninet-full else luninet-full;
+       in
+         lib.foldl' lib.recursiveUpdate { }
+           (lib.mapAttrsToList
+             (network-name: network:
+               lib.mapAttrs' (k: v: lib.nameValuePair (lib.trim v.publicKey) { name = k; })
+                 network.peers.by-name
+             ) 
+             { luni.peers.by-name = peers; }
+           );
     in
       rec {
         peer-names-json = pkgs.writeText "luninet-names.json" (builtins.toJSON (peerNames true));
