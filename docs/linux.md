@@ -136,7 +136,7 @@ PersistentKeepalive = 25              # optional, helps with NAT
 Name = asluni
 
 [Network]
-Address = 172.29.80.X/24
+Address = 172.29.80.X/18
 ```
 
 ### Apply
@@ -160,7 +160,7 @@ sudo ip link add dev asluni type wireguard
 sudo wg set asluni private-key /etc/wireguard/asluni.key
 
 # Assign your IP
-sudo ip address add 172.29.80.X/24 dev asluni
+sudo ip address add 172.29.80.X/18 dev asluni
 
 # Add peers
 sudo wg set asluni peer <PUBLIC_KEY> \

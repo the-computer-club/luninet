@@ -51,22 +51,17 @@ Normally, `inventory.json` is generated using the nix command:
 nix run .#update-inventory | jq > inventory.json
 ```
 
-If you don't have nix installed, you can generate `inventory.json` directly using the Python script:
+If you don't have nix installed, you may instead just hardcode your IP address.
+```nix
+# peers.nix
+{
+  your-hostname = {
+    publicKey = "your-public-key-here";
+    ipv4 = [ "172.29.80.200"]
+  };
+}
 
-```sh
-python3 ip-allocate.py \
-    --tenant 23 \
-    --controller 24 \
-    --root 172.29.80.0/23 \
-    --6peer 64 \
-    --6base 9 \
-    --6controller 48 \
-    --6instance-bits 1 \
-    luni peers.nix > inventory.json
 ```
-
-This requires Python 3 to be installed on your system.
-
 
 ### 5. Commit and open a pull request
 

@@ -41,7 +41,7 @@ Run through the installer with default options. WireGuard will open automaticall
 ```ini
 [Interface]
 PrivateKey = <your private key shown in the dialog>
-Address = 172.29.80.X/24   # your assigned IP from peers.nix
+Address = 172.29.80.X/18   # your assigned IP from peers.nix
 ```
 
 6. Click **Save**, then click **Activate**
@@ -50,10 +50,10 @@ Address = 172.29.80.X/24   # your assigned IP from peers.nix
 
 ## 3. Test the VPN
 
-Open a command prompt (`cmd.exe` or PowerShell) and ping the DNS server:
+Open a command prompt (`cmd.exe` or PowerShell) and ping the core router:
 
 ```
-ping 172.29.80.2
+ping 172.29.80.1
 ```
 
 You should get replies. If not, check that the tunnel is active in the WireGuard UI and that your public key has been [added to the peer list](./docs/joining.md).
