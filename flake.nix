@@ -20,6 +20,9 @@
 
     luninetModule.wireguard.networks.luni.peers.by-name = luninet-full;
 
+    
+    aslunip2p-peerlist.wireguard.networks.aslunip2p.peers.by-name = import ./p2p-peers.nix;
+    
     peerRecord = p: {
       A =
           if p ? ipv4
@@ -35,6 +38,7 @@
     };
 
     subdomains = peer: nixpkgs.lib.foldl' (s: x: { ${x} = peerRecord peer; } // s) {};
+
     
   in
   {
@@ -45,7 +49,14 @@
 
     flakeModules.asluni = luninetModule;
     nixosModules.asluni = luninetModule;
-    nixosModules.aslunip2p = import ./p2pnet.nix;   
+    nixosModules.aslunip2p-peerlist = aslunip2p-peerlist;
+    nixosModules.aslunip2p-client = {
+      imports = [
+        ./p2pnet.nix
+        aslunip2p-peerlist
+      ];
+    };
+    
     zones = {  
       "unallocatedspace.luni" = {
         NS = ["unallocatedspace.luni."];

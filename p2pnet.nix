@@ -1,5 +1,4 @@
 { config, lib, pkgs, ... }:
-
 let
   wgsd =
     pkgs.buildGoModule rec {
@@ -22,8 +21,7 @@ let
       };
     };
 
-
-  luninet-addr = pkgs.writeShellScript "luni-addr" ''
+  wg2luni = pkgs.writeShellScriptBin "lunib32-addr" ''
     echo "$1" | base64 -d | base32 | tr '[:upper:]' '[:lower:]' | sed s/=/.luni.b32./ | sed s/=//g
   '';
 
@@ -43,9 +41,14 @@ in
       default = "aslunip2p";
     };
 
+    interval = lib.mkOption {
+      type = lib.types.int;
+      default = 25;
+    };
+
     dnsSocket = lib.mkOption {
       type = lib.types.str;
-      default = "198.12.96.43:5353";
+      default = "172.29.80.1:5353";
     };
     
     package = lib.mkOption {
@@ -55,13 +58,17 @@ in
   };
   
   config = lib.mkIf cfg.enable {
-
-    systemd.timers.luninetp2p-discovery = {
+    systemd.timers.luninet-wgsd = {
       timerConfig = {
         wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnCalendar = timer snapName;
-          Persistent = "yes";
+        timerConfig =
+          let
+            i = builtins.toString cfg.interval;
+          in
+        {
+          OnBootSec=i;
+          OnUnitActiveSec=i;
+          AccuracySec="1s";
         };
       };
     };
@@ -80,7 +87,7 @@ in
           
           Directory = cfg.homeDir;
           ExecStart = 
-            "${cfg.package}/bin/wgsd-client -device=aslunip2p -dns=172.29.84.1:5353 -zone=unallocatedspace.luni";
+            "${cfg.package}/bin/wgsd-client -device=${cfg.device} -dns=${cfg.dnsSocket} -zone=${cfg.zone}";
 
           CapabilityBoundingSet =
             lib.mkForce "cap_net_bind_service cap_net_admin";
@@ -90,7 +97,5 @@ in
         };
       };
     };
-    
-    wireguard.networks.lunip2p.peers.by-name = import ./p2p-peers.nix;
   };
 }
