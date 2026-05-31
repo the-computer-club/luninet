@@ -1,4 +1,3 @@
-{ config, lib, pkgs, ... }:
 {
   wasp = {
     # registry
