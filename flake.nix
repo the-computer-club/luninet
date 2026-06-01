@@ -78,6 +78,8 @@
             "tape"
             "ca"
             "lowendtalk"
+            "doh"
+            "cache"
           ]);
       };
     };
