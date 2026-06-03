@@ -65,6 +65,9 @@
           adminEmail = "contact@unallocatedspace.luni";
           serial = 2025072000; # 2025-07-20-00
         };
+
+        A = ["172.29.83.1"];
+
         # inherit NS SOA;
         subdomains =
           (nixpkgs.lib.mapAttrs
@@ -94,7 +97,7 @@
           header = ''
             [Interface]
             Name = luni
-            DNS = 172.29.3.1
+            DNS = 172.29.83.1
             PrivateKey = 0000000000000000000000000
           '';
 
