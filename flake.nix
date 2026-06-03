@@ -23,23 +23,17 @@
     
     aslunip2p-peerlist.wireguard.networks.aslunip2p.peers.by-name = import ./p2p-peers.nix;
     
-    peerRecord = p: {
-      A =
-          if p ? ipv4
-          then map (x: (builtins.head (builtins.split "/" x))) p.ipv4
-          else [];
-      AAAA =
-        if
-          p ? ipv6
-        then
-          map (x: (builtins.head (builtins.split "/" x))) p.ipv6
-        else
-          [];
-    };
+    peerRecord = p:
+      let parse = p: field:
+        if p ? "${field}"
+        then map (x: (builtins.head (builtins.split "/" x))) p.${field}
+        else [];
+      in {
+        A = parse p "ipv4";
+        AAAA = parse p "ipv6";
+      };
 
     subdomains = peer: nixpkgs.lib.foldl' (s: x: { ${x} = peerRecord peer; } // s) {};
-
-    
   in
   {
     lib = {
@@ -63,9 +57,9 @@
         SOA = {
           nameServer = "unallocatedspace.luni.";
           adminEmail = "contact@unallocatedspace.luni";
-          serial = 2025072000; # 2025-07-20-00
+          serial = 2025072001; # 2025-07-20-00
         };
-
+        
         A = ["172.29.83.1"];
 
         # inherit NS SOA;
@@ -83,6 +77,8 @@
             "lowendtalk"
             "doh"
             "cache"
+            "pgadmin"
+            "observe"
           ]);
       };
     };
