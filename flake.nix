@@ -57,7 +57,7 @@
         SOA = {
           nameServer = "unallocatedspace.luni.";
           adminEmail = "contact@unallocatedspace.luni";
-          serial = 2025072001; # 2025-07-20-00
+          serial = 2026102801; # 2026-10-28-01 (mcp)
         };
         
         A = ["172.29.83.1"];
@@ -79,6 +79,9 @@
             "cache"
             "pgadmin"
             "observe"
+            # The MCP gateway on wasp (Infra/lunix, machines/wasp/mcp-gateway.nix):
+            # one endpoint in front of the fleet's MCP servers, key-gated at nginx.
+            "mcp"
           ]);
       };
     };
