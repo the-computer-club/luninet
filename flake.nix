@@ -57,7 +57,7 @@
         SOA = {
           nameServer = "unallocatedspace.luni.";
           adminEmail = "contact@unallocatedspace.luni";
-          serial = 2026102801; # 2026-10-28-01 (mcp)
+          serial = 2026102802; # 2026-10-28-02 (searx)
         };
         
         A = ["172.29.83.1"];
@@ -82,6 +82,10 @@
             # The MCP gateway on wasp (Infra/lunix, machines/wasp/mcp-gateway.nix):
             # one endpoint in front of the fleet's MCP servers, key-gated at nginx.
             "mcp"
+            # SearXNG on wasp (Infra/lunix, machines/wasp/searx.nix): the club's
+            # meta search front-end, served by the same nginx and behind the mesh
+            # allow-list. The record is what lets its certificate be ordered.
+            "searx"
           ]);
       };
     };
