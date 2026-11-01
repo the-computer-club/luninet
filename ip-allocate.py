@@ -1,4 +1,20 @@
 #!/usr/bin/env python3
+# DEPRECATED -- do not run this against `inventory.json` any more.
+#
+# superseded by `fabric/data.nix` + `lib/fabric` (see lib/README.md). The
+# replacement reads `inventory.json` as the oracle instead of allocating from
+# scratch: this script assigned IPv4 in JSON iteration order, so reordering
+# `peers.nix` renumbered every peer, and nothing checked the result against
+# anything else.
+#
+#   nix build .#checks.x86_64-linux.fabric-parity   # inventory == fabric, byte for byte
+#   nix eval --impure --json .#fabric              # ... and the whole space, with assertions
+#
+# It is kept, not deleted, because the history of what it allocated is the
+# reason the pins in `fabric/data.nix` look the way they do. It refuses to run.
+import sys as _sys
+if __name__ == "__main__":
+    _sys.exit("ip-allocate.py is deprecated: see fabric/data.nix and lib/README.md")
 
 #!/usr/bin/env python3
 """IPv4 + IPv6 address allocator for WireGuard networks.

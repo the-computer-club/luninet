@@ -34,8 +34,57 @@
       };
 
     subdomains = peer: nixpkgs.lib.foldl' (s: x: { ${x} = peerRecord peer; } // s) {};
+    # ---- the address space, as data -----------------------------------------
+    # `lib/fabric` (vendored from ComputerClub/ccpkgs; see lib/README.md) checks
+    # the inventory's pins against each other -- duplicates, gateways, blocks
+    # that overlap. The inventory stays the oracle: every host id and every IPv6
+    # address below comes from it, so nothing renumbers.
+    fabricLib = import ./lib/fabric.nix {
+      lib = nixpkgs.lib;
+      ipv4 = import ./lib/ipv4.nix;
+      ipv6 = import ./lib/ipv6.nix;
+    };
+
+    fabricNet = fabricLib.eval { modules = [ ./fabric/data.nix ]; };
+
+    fabricMismatches =
+      let
+        lib' = nixpkgs.lib;
+        controllers = lib'.attrNames (lib'.filterAttrs (_: v: v.isController or false) luninet-full);
+        expected = lib'.concatMap
+          (host: lib'.imap0
+            (i: cidr: { inherit host; iface = "wg-${lib'.elemAt controllers i}"; want = cidr; })
+            luninet-full.${host}.ipv4)
+          (lib'.attrNames (lib'.filterAttrs (_: v: v ? ipv4) luninet-full));
+        actual = e:
+          let a = fabricNet.addresses.${e.host}.${e.iface} or null;
+          in if a == null then null else "${a.address}/${toString a.prefixLength}";
+      in
+      map (e: "${e.host}.${e.iface}: the inventory says ${e.want}, the fabric says ${toString (actual e)}")
+        (builtins.filter (e: actual e != e.want) expected);
   in
   {
+    # The address space as an output: this is what a consumer (lunix) reads
+    # instead of running the allocator. `fabricNet.assertions` must be empty.
+    inherit fabricNet;
+    fabric = fabricNet;
+
+    checks.x86_64-linux =
+      let
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        verdict = name: problems:
+          if problems == [ ]
+          then pkgs.runCommand name { } "touch $out"
+          else pkgs.runCommand name { } ''
+            echo ${nixpkgs.lib.escapeShellArg (nixpkgs.lib.concatStringsSep "\n" problems)}
+            exit 1
+          '';
+      in
+      {
+        fabric = verdict "fabric" (map (a: a.message) fabricNet.assertions);
+        fabric-parity = verdict "fabric-parity" fabricMismatches;
+      };
+
     lib = {
       toPeer = toPeers;
       inherit toPeers toNonFlakeParts peerRecord subdomains;
