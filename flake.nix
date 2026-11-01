@@ -34,6 +34,30 @@
       };
 
     subdomains = peer: nixpkgs.lib.foldl' (s: x: { ${x} = peerRecord peer; } // s) {};
+    # ---- the peers, as a consumer needs them ---------------------------------
+    # One entry per luninet peer, with the *one* IPv4 and the *one* IPv6 address
+    # it owns, so a controller does not have to know how luninet's inventory
+    # happens to spell them (a list per family, one entry per controller).
+    #
+    # This is the shape `@ccpkgs/mikrotik/luninet-peers` takes: `allowedIPs` is
+    # what the controller routes to that peer -- its /32 and its /64 -- and
+    # `endpoint` is only set for peers that can be dialled.
+    luninetPeers =
+      let
+        lib' = nixpkgs.lib;
+        isController = v: v.isController or false;
+        entry = name: v: {
+          inherit name;
+          publicKey = v.publicKey or null;
+          ipv4 = lib'.head (v.ipv4 or [ ]);
+          ipv6 = lib'.head (v.ipv6 or [ ]);
+          selfEndpoint = v.selfEndpoint or null;
+          allowedIPs = (v.ipv4 or [ ]) ++ (v.ipv6 or [ ]);
+        };
+        peers = lib'.filterAttrs (_: v: !(isController v) && v ? publicKey) luninet-full;
+      in
+      lib'.mapAttrs' (name: v: lib'.nameValuePair name (entry name v)) peers;
+
     # ---- the address space, as data -----------------------------------------
     # `lib/fabric` (vendored from ComputerClub/ccpkgs; see lib/README.md) checks
     # the inventory's pins against each other -- duplicates, gateways, blocks
@@ -66,7 +90,7 @@
   {
     # The address space as an output: this is what a consumer (lunix) reads
     # instead of running the allocator. `fabricNet.assertions` must be empty.
-    inherit fabricNet;
+    inherit fabricNet luninetPeers;
     fabric = fabricNet;
 
     checks.x86_64-linux =
